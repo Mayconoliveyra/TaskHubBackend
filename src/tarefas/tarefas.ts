@@ -83,13 +83,11 @@ const processarTarefas = () => {
         });
 
         executarTarefa(tarefa);
-
-        emExecucaoTarefas = false;
-      } else {
-        emExecucaoTarefas = false;
       }
     } catch (error) {
       Util.Log.error(`${MODULO} | Tarefas | Erro inesperado ao processar.`, error);
+    } finally {
+      emExecucaoTarefas = false;
     }
   });
 };
