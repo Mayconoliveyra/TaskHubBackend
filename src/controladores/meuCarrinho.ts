@@ -37,6 +37,13 @@ const configuracaoValidacao = Middlewares.validacao((getSchema) => ({
     }),
   ),
 }));
+const testarConexaoValidacao = Middlewares.validacao((getSchema) => ({
+  params: getSchema<{ empresaId: number }>(
+    yup.object().shape({
+      empresaId: yup.number().required(),
+    }),
+  ),
+}));
 
 const configuracao = async (req: Request<{}, {}, IBodyProps>, res: Response) => {
   const { empresa_id, mc_usuario, mc_senha } = req.body;
@@ -49,31 +56,31 @@ const configuracao = async (req: Request<{}, {}, IBodyProps>, res: Response) => 
 
   const resToken = await Servicos.MeuCarrinho.autenticar(mc_usuario, mc_senha);
 
-  if (!resToken.sucesso || !resToken.dados) {
+  if (!resToken.sucesso) {
     await limparConfigSS(empresa_id);
 
     return res.status(StatusCodes.BAD_REQUEST).json({
-      errors: { default: resToken.erro || Util.Msg.erroInesperado },
+      errors: { default: resToken.erro },
     });
   }
 
   const resUsuario = await Servicos.MeuCarrinho.getUsuario(resToken.dados.token);
 
-  if (!resUsuario.sucesso || !resUsuario.dados) {
+  if (!resUsuario.sucesso) {
     await limparConfigSS(empresa_id);
 
     return res.status(StatusCodes.BAD_REQUEST).json({
-      errors: { default: resUsuario.erro || Util.Msg.erroInesperado },
+      errors: { default: resUsuario.erro },
     });
   }
 
-  const resEmpresa = await Servicos.MeuCarrinho.getEmpresa(resToken.dados.token, resUsuario.dados.merchantId);
+  const resEmpresa = await Servicos.MeuCarrinho.getEmpresa(empresa_id, resUsuario.dados.merchantId, resToken.dados.token);
 
-  if (!resEmpresa.sucesso || !resEmpresa.dados) {
+  if (!resEmpresa.sucesso) {
     await limparConfigSS(empresa_id);
 
     return res.status(StatusCodes.BAD_REQUEST).json({
-      errors: { default: resEmpresa.erro || Util.Msg.erroInesperado },
+      errors: { default: resEmpresa.erro },
     });
   }
 
@@ -91,11 +98,49 @@ const configuracao = async (req: Request<{}, {}, IBodyProps>, res: Response) => 
     await limparConfigSS(empresa_id);
 
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      errors: { default: resAtDados.erro },
+      errors: { default: Util.Msg.erroInesperado },
     });
   }
 
   return res.status(StatusCodes.NO_CONTENT).send();
+};
+const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: Response) => {
+  const empresaId = req.params.empresaId as unknown as number;
+
+  const empresa = await Repositorios.Empresa.consultarPrimeiroRegistro([{ coluna: 'id', operador: '=', valor: empresaId }]);
+
+  if (!empresa.sucesso) {
+    return res.status(StatusCodes.NOT_FOUND).json({ errors: { default: 'Empresa não encontrada.' } });
+  }
+
+  if (!empresa.dados.mc_token || !empresa.dados.mc_empresa_id) {
+    return res.status(StatusCodes.NOT_FOUND).json({ errors: { default: 'Meu Carrinho ainda não está autenticado.' } });
+  }
+
+  const resEmpresa = await Servicos.MeuCarrinho.getEmpresa(empresaId, empresa.dados.mc_empresa_id);
+
+  if (!resEmpresa.sucesso) {
+    await limparConfigSS(empresaId);
+
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      errors: { default: resEmpresa.erro },
+    });
+  }
+
+  const resAtDados = await Repositorios.Empresa.atualizarDados(empresaId, {
+    mc_empresa_nome: resEmpresa.dados.nome,
+    mc_empresa_cnpj: resEmpresa.dados.cnpj,
+  });
+
+  if (!resAtDados.sucesso) {
+    await limparConfigSS(empresaId);
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      errors: { default: Util.Msg.erroInesperado },
+    });
+  }
+
+  return res.status(StatusCodes.OK).send('Meu Carrinho está autenticado.');
 };
 
 const teste = async (req: Request, res: Response) => {
@@ -133,6 +178,8 @@ const teste = async (req: Request, res: Response) => {
 
 export const MeuCarrinho = {
   configuracaoValidacao,
+  testarConexaoValidacao,
   configuracao,
+  testarConexao,
   teste,
 };

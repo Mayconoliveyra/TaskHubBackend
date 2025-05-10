@@ -111,8 +111,30 @@ const getUsuario = async (token: string): Promise<IRetorno<IGetUsuario>> => {
   }
 };
 
-const getEmpresa = async (token: string, merchantId: string): Promise<IRetorno<IGetEmpresa>> => {
+const getEmpresa = async (empresaId: number, merchantId: string, token?: string): Promise<IRetorno<IGetEmpresa>> => {
   try {
+    // Se não for passado o "token", vou utilizar os dados da tabela empresa.
+    if (!token) {
+      const apiAxiosMC = await Axios.axiosMeuCarrinho(empresaId);
+      if (typeof apiAxiosMC === 'string') {
+        return {
+          sucesso: false,
+          dados: null,
+          erro: apiAxiosMC,
+          total: 1,
+        };
+      }
+
+      const response = await apiAxiosMC.get<IMCGetEmpresa>(`/merchants/${merchantId}`);
+
+      return {
+        sucesso: true,
+        dados: { nome: response.data.name || '', cnpj: response.data.cnpj || '' },
+        erro: null,
+        total: 1,
+      };
+    }
+
     const response = await Axios.defaultAxios.get<IMCGetEmpresa>(`${BASE_URL_MC}/merchants/${merchantId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
