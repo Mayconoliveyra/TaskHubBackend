@@ -16,7 +16,7 @@ type IBodyProps = {
   mc_senha: string;
 };
 
-const limparConfigSS = async (id: number) => {
+const limparConfigMC = async (id: number) => {
   await Repositorios.Empresa.atualizarDados(id, {
     mc_usuario: null,
     mc_senha: null,
@@ -57,7 +57,7 @@ const configuracao = async (req: Request<{}, {}, IBodyProps>, res: Response) => 
   const resToken = await Servicos.MeuCarrinho.autenticar(mc_usuario, mc_senha);
 
   if (!resToken.sucesso) {
-    await limparConfigSS(empresa_id);
+    await limparConfigMC(empresa_id);
 
     return res.status(StatusCodes.BAD_REQUEST).json({
       errors: { default: resToken.erro },
@@ -67,7 +67,7 @@ const configuracao = async (req: Request<{}, {}, IBodyProps>, res: Response) => 
   const resUsuario = await Servicos.MeuCarrinho.getUsuario(resToken.dados.token);
 
   if (!resUsuario.sucesso) {
-    await limparConfigSS(empresa_id);
+    await limparConfigMC(empresa_id);
 
     return res.status(StatusCodes.BAD_REQUEST).json({
       errors: { default: resUsuario.erro },
@@ -77,7 +77,7 @@ const configuracao = async (req: Request<{}, {}, IBodyProps>, res: Response) => 
   const resEmpresa = await Servicos.MeuCarrinho.getEmpresa(empresa_id, resUsuario.dados.merchantId, resToken.dados.token);
 
   if (!resEmpresa.sucesso) {
-    await limparConfigSS(empresa_id);
+    await limparConfigMC(empresa_id);
 
     return res.status(StatusCodes.BAD_REQUEST).json({
       errors: { default: resEmpresa.erro },
@@ -95,7 +95,7 @@ const configuracao = async (req: Request<{}, {}, IBodyProps>, res: Response) => 
   });
 
   if (!resAtDados.sucesso) {
-    await limparConfigSS(empresa_id);
+    await limparConfigMC(empresa_id);
 
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       errors: { default: Util.Msg.erroInesperado },
@@ -122,7 +122,7 @@ const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: R
   const resEmpresa = await Servicos.MeuCarrinho.getEmpresa(empresaId, empresa.dados.mc_empresa_id);
 
   if (!resEmpresa.sucesso) {
-    await limparConfigSS(empresaId);
+    await limparConfigMC(empresaId);
 
     return res.status(StatusCodes.BAD_REQUEST).json({
       errors: { default: 'Falha ao realizar o teste de conexão: credenciais inválidas ou pendentes de configuração.' },
@@ -135,7 +135,7 @@ const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: R
   });
 
   if (!resAtDados.sucesso) {
-    await limparConfigSS(empresaId);
+    await limparConfigMC(empresaId);
 
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       errors: { default: Util.Msg.erroInesperado },
