@@ -114,7 +114,9 @@ const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: R
   }
 
   if (!empresa.dados.mc_token || !empresa.dados.mc_empresa_id) {
-    return res.status(StatusCodes.NOT_FOUND).json({ errors: { default: 'Meu Carrinho ainda não está autenticado.' } });
+    return res
+      .status(StatusCodes.NOT_FOUND)
+      .json({ errors: { default: 'Falha ao realizar o teste de conexão: credenciais inválidas ou pendentes de configuração.' } });
   }
 
   const resEmpresa = await Servicos.MeuCarrinho.getEmpresa(empresaId, empresa.dados.mc_empresa_id);
@@ -123,7 +125,7 @@ const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: R
     await limparConfigSS(empresaId);
 
     return res.status(StatusCodes.BAD_REQUEST).json({
-      errors: { default: resEmpresa.erro },
+      errors: { default: 'Falha ao realizar o teste de conexão: credenciais inválidas ou pendentes de configuração.' },
     });
   }
 
@@ -140,7 +142,7 @@ const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: R
     });
   }
 
-  return res.status(StatusCodes.OK).send('Meu Carrinho está autenticado.');
+  return res.status(StatusCodes.OK).send('Teste de conexão realizado com sucesso.');
 };
 
 const teste = async (req: Request, res: Response) => {
