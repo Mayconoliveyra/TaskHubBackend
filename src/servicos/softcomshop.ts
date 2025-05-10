@@ -19,6 +19,7 @@ import {
   ISSGetGrupos,
   ISSGetCombos,
   ISSGetCombosItens,
+  ISSGetEmpresa,
 } from './types/softcomshop';
 
 const MODULO = '[Softcomshop]';
@@ -125,6 +126,46 @@ const criarToken = async (base_url: string, client_id: string, client_secret: st
     };
   } catch (error: any) {
     Util.Log.error(`${MODULO} | Erro ao gerar token | Client: ${client_id}`, error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 1,
+    };
+  }
+};
+
+const getEmpresa = async (empresaId: number): Promise<IRetorno<ISSGetEmpresa>> => {
+  try {
+    const apiAxiosSS = await Axios.axiosSoftcomshop(empresaId);
+    if (typeof apiAxiosSS === 'string') {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: apiAxiosSS,
+        total: 1,
+      };
+    }
+    const response = await apiAxiosSS.get<ISSResponseBase<ISSGetEmpresa>>(`/api/empresa`);
+
+    if (response.data.code !== 1) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: response.data.human || 'Erro ao consultar dados da empresa.',
+        total: 1,
+      };
+    }
+
+    return {
+      sucesso: true,
+      dados: response.data.data,
+      erro: null,
+      total: 1,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao consultar dados da empresa.`, error);
 
     return {
       sucesso: false,
@@ -548,6 +589,7 @@ export const alimentarProdutos = async (empresaId: number): Promise<IRetorno<str
 export const SoftcomShop = {
   criarDispositivo,
   criarToken,
+  getEmpresa,
   getProdutos,
   getGrupos,
   getCombos,

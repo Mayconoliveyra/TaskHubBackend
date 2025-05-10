@@ -36,6 +36,13 @@ const configuracaoValidacao = Middlewares.validacao((getSchema) => ({
     }),
   ),
 }));
+const testarConexaoValidacao = Middlewares.validacao((getSchema) => ({
+  params: getSchema<{ empresaId: number }>(
+    yup.object().shape({
+      empresaId: yup.number().required(),
+    }),
+  ),
+}));
 
 const configuracao = async (req: Request<{}, {}, IBodyProps>, res: Response) => {
   const { empresa_id, erp_url } = req.body;
@@ -114,8 +121,44 @@ const configuracao = async (req: Request<{}, {}, IBodyProps>, res: Response) => 
 
   return res.status(StatusCodes.NO_CONTENT).send();
 };
+const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: Response) => {
+  const empresaId = req.params.empresaId as unknown as number;
+
+  const empresa = await Repositorios.Empresa.consultarPrimeiroRegistro([{ coluna: 'id', operador: '=', valor: empresaId }]);
+
+  if (!empresa.sucesso) {
+    return res.status(StatusCodes.NOT_FOUND).json({ errors: { default: 'Empresa não encontrada.' } });
+  }
+
+  const resEmpresa = await Servicos.SoftcomShop.getEmpresa(empresaId);
+
+  if (!resEmpresa.sucesso) {
+    await limparConfigSS(empresaId);
+
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      errors: { default: 'Falha ao realizar o teste de conexão: credenciais inválidas ou pendentes de configuração.' },
+    });
+  }
+
+  const resAtDados = await Repositorios.Empresa.atualizarDados(empresaId, {
+    ss_empresa_nome: resEmpresa.dados.empresa_fantasia,
+    ss_empresa_cnpj: resEmpresa.dados.empresa_cnpj,
+  });
+
+  if (!resAtDados.sucesso) {
+    await limparConfigSS(empresaId);
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      errors: { default: Util.Msg.erroInesperado },
+    });
+  }
+
+  return res.status(StatusCodes.OK).json('Teste de conexão realizado com sucesso.');
+};
 
 export const SoftcomShop = {
   configuracaoValidacao,
+  testarConexaoValidacao,
   configuracao,
+  testarConexao,
 };

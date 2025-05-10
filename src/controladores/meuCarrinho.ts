@@ -142,7 +142,7 @@ const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: R
     });
   }
 
-  return res.status(StatusCodes.OK).send('Teste de conexão realizado com sucesso.');
+  return res.status(StatusCodes.OK).json('Teste de conexão realizado com sucesso.');
 };
 
 const teste = async (req: Request, res: Response) => {
