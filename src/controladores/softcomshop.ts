@@ -130,13 +130,17 @@ const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: R
     return res.status(StatusCodes.NOT_FOUND).json({ errors: { default: 'Empresa não encontrada.' } });
   }
 
+  if (!empresa.dados.ss_token || !empresa.dados.ss_url || !empresa.dados.ss_client_id || !empresa.dados.ss_client_secret) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ errors: { default: 'Falha ao realizar o teste de conexão: credenciais inválidas ou pendentes de configuração.' } });
+  }
+
   const resEmpresa = await Servicos.SoftcomShop.getEmpresa(empresaId);
 
   if (!resEmpresa.sucesso) {
-    await limparConfigSS(empresaId);
-
     return res.status(StatusCodes.BAD_REQUEST).json({
-      errors: { default: 'Falha ao realizar o teste de conexão: credenciais inválidas ou pendentes de configuração.' },
+      errors: { default: resEmpresa.erro },
     });
   }
 
@@ -146,8 +150,6 @@ const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: R
   });
 
   if (!resAtDados.sucesso) {
-    await limparConfigSS(empresaId);
-
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       errors: { default: Util.Msg.erroInesperado },
     });

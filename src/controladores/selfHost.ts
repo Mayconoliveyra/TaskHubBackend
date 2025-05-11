@@ -136,6 +136,12 @@ const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: R
     return res.status(StatusCodes.NOT_FOUND).json({ errors: { default: 'Empresa não encontrada.' } });
   }
 
+  if (!empresa.dados.sh_token || !empresa.dados.sh_client_id || !empresa.dados.sh_client_secret) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ errors: { default: 'Falha ao realizar o teste de conexão: credenciais inválidas ou pendentes de configuração.' } });
+  }
+
   const resEmpresa = await Servicos.SelfHost.getEmpresa(empresaId);
 
   if (!resEmpresa.sucesso) {

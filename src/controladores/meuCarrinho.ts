@@ -113,19 +113,17 @@ const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: R
     return res.status(StatusCodes.NOT_FOUND).json({ errors: { default: 'Empresa não encontrada.' } });
   }
 
-  if (!empresa.dados.mc_token || !empresa.dados.mc_empresa_id) {
+  if (!empresa.dados.mc_token || !empresa.dados.mc_empresa_id || !empresa.dados.mc_usuario || !empresa.dados.mc_senha) {
     return res
-      .status(StatusCodes.NOT_FOUND)
+      .status(StatusCodes.BAD_REQUEST)
       .json({ errors: { default: 'Falha ao realizar o teste de conexão: credenciais inválidas ou pendentes de configuração.' } });
   }
 
   const resEmpresa = await Servicos.MeuCarrinho.getEmpresa(empresaId, empresa.dados.mc_empresa_id);
 
   if (!resEmpresa.sucesso) {
-    await limparConfigMC(empresaId);
-
     return res.status(StatusCodes.BAD_REQUEST).json({
-      errors: { default: 'Falha ao realizar o teste de conexão: credenciais inválidas ou pendentes de configuração.' },
+      errors: { default: resEmpresa.erro },
     });
   }
 
@@ -135,8 +133,6 @@ const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: R
   });
 
   if (!resAtDados.sucesso) {
-    await limparConfigMC(empresaId);
-
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       errors: { default: Util.Msg.erroInesperado },
     });
