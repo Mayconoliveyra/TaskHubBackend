@@ -139,10 +139,8 @@ const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: R
   const resEmpresa = await Servicos.SelfHost.getEmpresa(empresaId);
 
   if (!resEmpresa.sucesso) {
-    await limparConfigSH(empresaId);
-
     return res.status(StatusCodes.BAD_REQUEST).json({
-      errors: { default: 'Falha ao realizar o teste de conexão: credenciais inválidas ou pendentes de configuração.' },
+      errors: { default: resEmpresa.erro },
     });
   }
 
@@ -152,8 +150,6 @@ const testarConexao = async (req: Request<{ empresaId: string }, {}, {}>, res: R
   });
 
   if (!resAtDados.sucesso) {
-    await limparConfigSH(empresaId);
-
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       errors: { default: Util.Msg.erroInesperado },
     });
