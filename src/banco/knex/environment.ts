@@ -27,6 +27,17 @@ const development: Knex.Config = {
     directory: path.resolve(__dirname, '..', 'seeds'),
   },
   connection: { ...connection, database: `dev-${process.env.DATABASE_NAME}` },
+  pool: {
+    min: 2, // Conexões mínimas
+    max: 10, // Conexões máximas
+    acquireTimeoutMillis: 30000, // Tempo máximo para tentar adquirir uma conexão (30s)
+    idleTimeoutMillis: 10000, // Tempo máximo de inatividade para uma conexão (10s)
+    afterCreate: (conn: any, done: Function) => {
+      conn.query('SET SESSION wait_timeout = 600;', (err: any) => {
+        done(err, conn);
+      });
+    },
+  },
 };
 
 const production: Knex.Config = {
@@ -40,6 +51,17 @@ const production: Knex.Config = {
     extension: 'js',
   },
   connection: { ...connection, database: process.env.DATABASE_NAME },
+  pool: {
+    min: 2, // Conexões mínimas
+    max: 10, // Conexões máximas
+    acquireTimeoutMillis: 30000, // Tempo máximo para tentar adquirir uma conexão (30s)
+    idleTimeoutMillis: 10000, // Tempo máximo de inatividade para uma conexão (10s)
+    afterCreate: (conn: any, done: Function) => {
+      conn.query('SET SESSION wait_timeout = 600;', (err: any) => {
+        done(err, conn);
+      });
+    },
+  },
 };
 
 export { development, production };
