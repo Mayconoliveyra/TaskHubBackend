@@ -47,9 +47,9 @@ export async function up(knex: Knex): Promise<void> {
       te.updated_at AS te_updated_at,
 
       -- Verificação dos tokens
-      CASE WHEN e.ss_token_exp IS NOT NULL THEN TRUE ELSE FALSE END AS ss_autenticado,
-      CASE WHEN e.mc_token_exp IS NOT NULL THEN TRUE ELSE FALSE END AS mc_autenticado,
-      CASE WHEN e.sh_token_exp IS NOT NULL THEN TRUE ELSE FALSE END AS sh_autenticado
+      CASE WHEN e.ss_token IS NOT NULL THEN TRUE ELSE FALSE END AS ss_autenticado,
+      CASE WHEN e.mc_token IS NOT NULL THEN TRUE ELSE FALSE END AS mc_autenticado,
+      CASE WHEN e.sh_token IS NOT NULL THEN TRUE ELSE FALSE END AS sh_autenticado
     FROM empresas e
     CROSS JOIN tarefas t
     LEFT JOIN (
