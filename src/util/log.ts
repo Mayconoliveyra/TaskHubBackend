@@ -23,6 +23,15 @@ const getLogFileTransport = () => {
 // Criar o transporte inicial
 let fileTransport = getLogFileTransport();
 
+const safeParse = (raw: any) => {
+  if (typeof raw !== 'string') return raw;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return { raw }; // preserva o texto bruto para inspeção
+  }
+};
+
 // Função para formatar erros
 const formatError = (error: any, truncateStack = false) => {
   if (error instanceof AxiosError) {
@@ -32,8 +41,8 @@ const formatError = (error: any, truncateStack = false) => {
       method: error.config?.method?.toUpperCase() || 'Método desconhecido',
       url: error.config?.url || 'URL desconhecida',
       queryParams: error.config?.params || 'Sem parâmetros',
-      requestBody: error.config?.data ? JSON.parse(error.config.data) : 'Sem corpo',
-      responseData: error.response?.data || 'Nenhum dado retornado',
+      requestBody: safeParse(error.config?.data),
+      responseData: safeParse(error.response?.data),
       headers: error.response?.headers || 'Sem headers',
       errorCode: error.code || 'Sem código de erro',
       stack: truncateStack && error.stack ? error.stack : error.stack,

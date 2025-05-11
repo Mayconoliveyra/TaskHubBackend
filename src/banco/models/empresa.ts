@@ -28,6 +28,8 @@ export interface IEmpresa {
   sh_url?: string | null;
   sh_client_id?: string | null;
   sh_client_secret?: string | null;
+  sh_empresa_nome?: string | null;
+  sh_empresa_cnpj?: string | null;
   sh_token?: string | null;
   sh_token_exp: number;
 

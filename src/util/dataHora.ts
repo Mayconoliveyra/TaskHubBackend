@@ -43,7 +43,7 @@ const obterDataAtual = (formato: TFormatoDataHora = 'YYYY-MM-DD HH:mm:ss'): stri
  * Retorna o timestamp Unix atual (número de segundos desde 01/01/1970).
  * @returns Timestamp Unix como número.
  */
-const obterTimestampAtual = (): number => {
+const obterTimestampUnixAtual = (): number => {
   return moment().unix();
 };
 
@@ -98,7 +98,7 @@ const adicionarDias = (data: string | Date, quantidade: number, formato: TFormat
 };
 
 const gerarTimestampMM = (minutosMin: number, minutosMax: number, erroTentativas?: 0 | 1 | 2 | 3): number => {
-  const agora = obterTimestampAtual();
+  const agora = obterTimestampUnixAtual();
   const segundosMin = minutosMin * 60;
   const segundosMax = minutosMax * 60;
 
@@ -131,7 +131,7 @@ const converterDataParaTimestamp = (data: string): number => {
 export const DataHora = {
   formatarDataHora,
   obterDataAtual,
-  obterTimestampAtual,
+  obterTimestampUnixAtual,
   isAntes,
   isDepois,
   isMesmoDia,
