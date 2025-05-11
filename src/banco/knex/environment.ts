@@ -16,6 +16,8 @@ const connection = {
     }
     return next();
   },
+  connectTimeout: 60000, // Timeout de conexão
+  keepAliveInitialDelay: 10000, // Envia um sinal a cada 10s para manter a conexão viva
 };
 
 const development: Knex.Config = {
@@ -29,14 +31,11 @@ const development: Knex.Config = {
   connection: { ...connection, database: `dev-${process.env.DATABASE_NAME}` },
   pool: {
     min: 2, // Conexões mínimas
-    max: 10, // Conexões máximas
-    acquireTimeoutMillis: 30000, // Tempo máximo para tentar adquirir uma conexão (30s)
-    idleTimeoutMillis: 10000, // Tempo máximo de inatividade para uma conexão (10s)
-    afterCreate: (conn: any, done: Function) => {
-      conn.query('SET SESSION wait_timeout = 600;', (err: any) => {
-        done(err, conn);
-      });
-    },
+    max: 15, // Conexões máximas
+    acquireTimeoutMillis: 60000, // Tempo de espera para adquirir conexão (60s)
+    idleTimeoutMillis: 30000, // Tempo que a conexão pode ficar ociosa (30s)
+    reapIntervalMillis: 10000, // Verifica e recicla conexões ociosas a cada 10s
+    createRetryIntervalMillis: 5000, // Tenta recriar conexões fechadas a cada 5s
   },
 };
 
@@ -53,14 +52,11 @@ const production: Knex.Config = {
   connection: { ...connection, database: process.env.DATABASE_NAME },
   pool: {
     min: 2, // Conexões mínimas
-    max: 10, // Conexões máximas
-    acquireTimeoutMillis: 30000, // Tempo máximo para tentar adquirir uma conexão (30s)
-    idleTimeoutMillis: 10000, // Tempo máximo de inatividade para uma conexão (10s)
-    afterCreate: (conn: any, done: Function) => {
-      conn.query('SET SESSION wait_timeout = 600;', (err: any) => {
-        done(err, conn);
-      });
-    },
+    max: 15, // Conexões máximas
+    acquireTimeoutMillis: 60000, // Tempo de espera para adquirir conexão (60s)
+    idleTimeoutMillis: 30000, // Tempo que a conexão pode ficar ociosa (30s)
+    reapIntervalMillis: 10000, // Verifica e recicla conexões ociosas a cada 10s
+    createRetryIntervalMillis: 5000, // Tenta recriar conexões fechadas a cada 5s
   },
 };
 
