@@ -167,9 +167,9 @@ const teste = async (req: Request, res: Response) => {
   }); */
 
   // const mc = await Servicos.MeuCarrinho.zerarCadastros(empresa_id, empresa.mc_empresa_id || '');
-  const mc = await Servicos.MeuCarrinho.exportarMercadoriasParaMeuCarrinho(empresa_id, empresa?.dados?.mc_empresa_id || '');
+  const sh = await Servicos.SelfHost.getProdutos(empresa_id);
 
-  console.log('mc', mc);
+  console.log('sh', sh);
 
   return res.status(StatusCodes.NO_CONTENT).send();
 };

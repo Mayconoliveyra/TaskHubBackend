@@ -1,14 +1,10 @@
 import qs from 'qs';
 
-import { IProdutoERP } from '../banco/models/produtoERP';
-
-import { Repositorios } from '../repositorios';
-
 import { Util } from '../util';
 import { IRetorno } from '../util/tipagens';
 
 import { Axios } from './axios';
-import { ISHExtrairDominioEClientId, ISHGetEmpresa, ISHObterClientSecret, ISHObterToken, ISHResponseBase } from './types/selfHost';
+import { ISHExtrairDominioEClientId, ISHGetEmpresa, ISHGetProdutos, ISHObterClientSecret, ISHObterToken, ISHResponseBase } from './types/selfHost';
 
 const MODULO = '[SelfHost]';
 
@@ -167,9 +163,71 @@ const getEmpresa = async (empresaId: number): Promise<IRetorno<ISHGetEmpresa>> =
   }
 };
 
+const getProdutos = async (empresaId: number): Promise<IRetorno<ISHGetProdutos[]>> => {
+  try {
+    const apiAxiosSH = await Axios.axiosSelfHost(empresaId);
+    if (typeof apiAxiosSH === 'string') {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: apiAxiosSH,
+        total: 1,
+      };
+    }
+    const result: ISHGetProdutos[] = [];
+
+    const ultimaSinc = 1; // por enquanto vou deixar fixo 1.
+    let page = 1;
+    let countPages = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const response = await apiAxiosSH.get<ISHResponseBase<ISHGetProdutos[]>>(`/api/produtos/produtos/ultima_sincronizacao/${ultimaSinc}/page/${page}`);
+
+      if (response.data.code !== 1) {
+        return {
+          sucesso: false,
+          dados: null,
+          erro: response.data.human || 'Erro ao consultar produtos',
+          total: 1,
+        };
+      }
+
+      const produtos = response.data.data;
+      const currentPage = response.data.meta.page.current;
+      countPages = response.data.meta.page.count;
+
+      result.push(...produtos);
+
+      if (currentPage !== countPages) {
+        page += 1;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    return {
+      sucesso: true,
+      dados: result,
+      erro: null,
+      total: result?.length || 0,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao consultar produtos.`, error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 1,
+    };
+  }
+};
+
 export const SelfHost = {
   extrairDominioEClientId,
   obterClientSecret,
   obterToken,
   getEmpresa,
+  getProdutos,
 };
