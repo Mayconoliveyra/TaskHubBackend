@@ -1,5 +1,9 @@
 import qs from 'qs';
 
+import { IProdutoERP } from '../banco/models/produtoERP';
+
+import { Repositorios } from '../repositorios';
+
 import { Util } from '../util';
 import { IRetorno } from '../util/tipagens';
 
@@ -7,6 +11,7 @@ import { Axios } from './axios';
 import {
   ISHExtrairDominioEClientId,
   ISHGetCombos,
+  ISHGetCombosItens,
   ISHGetEmpresa,
   ISHGetGrupos,
   ISHGetProdutos,
@@ -325,6 +330,233 @@ const getCombos = async (empresaId: number): Promise<IRetorno<ISHGetCombos[]>> =
   }
 };
 
+export const alimentarProdutos = async (empresaId: number): Promise<IRetorno<string>> => {
+  try {
+    let totalCategoriasEncontradas = 0;
+    let totalProdutosEncontrados = 0;
+    let totalVariacoesEncontradas = 0;
+    let totalVariacoesItemEncontrados = 0;
+
+    const resultTruncate = await Repositorios.ProdutosERP.apagarProdutosPorEmpresaId(empresaId);
+    if (!resultTruncate) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: Util.Msg.erroInesperado,
+        total: 1,
+      };
+    }
+
+    const [allCategorias, allVariacoes, allProdutos] = await Promise.all([getGrupos(empresaId), getCombos(empresaId), getProdutos(empresaId)]);
+
+    if (!allCategorias.sucesso) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: allCategorias.erro,
+        total: 1,
+      };
+    }
+
+    if (!allVariacoes.sucesso) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: allVariacoes.erro,
+        total: 1,
+      };
+    }
+
+    if (!allProdutos.sucesso) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: allProdutos.erro,
+        total: 1,
+      };
+    }
+
+    // ### CATEGORIAS ###
+    for (const c of allCategorias.dados) {
+      const produtoCategoria = allProdutos.dados.find((p) => p.grupo_id == c.id);
+
+      if (produtoCategoria) {
+        const modeloCategory: Partial<IProdutoERP> = {
+          type: 'CATEGORY',
+          empresa_id: empresaId,
+          erp_c_code: Util.Texto.truncarTexto(Util.Texto.tratarComoString(c.id), 50),
+          erp_c_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(c.nome), 100),
+          erp_c_availability: 'AVAILABLE',
+        };
+
+        const resultCategoria = await Repositorios.ProdutosERP.inserir(modeloCategory);
+        if (!resultCategoria) {
+          return {
+            sucesso: false,
+            dados: null,
+            erro: Util.Msg.erroInesperado,
+            total: 1,
+          };
+        }
+
+        totalCategoriasEncontradas++;
+      }
+    }
+
+    const categoriasDb = await Repositorios.ProdutosERP.consultarCategorias(empresaId);
+    if (!categoriasDb) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: Util.Msg.erroInesperado,
+        total: 1,
+      };
+    }
+    const categoriasMap = new Map(categoriasDb.map((c) => [c.erp_c_code, c]));
+
+    // ### PRODUTOS ###
+    for (const p of allProdutos.dados) {
+      const c = categoriasMap.get(p.grupo_id.toString());
+
+      if (!c) {
+        Util.Log.warn(`${MODULO} | Produto ignorado, categoria não encontrada: ID: ${p.id}, Nome: ${p.nome}`);
+        continue;
+      }
+
+      const modeloProduct: Partial<IProdutoERP> = {
+        type: 'PRODUCT',
+        empresa_id: empresaId,
+        erp_c_code: Util.Texto.truncarTexto(Util.Texto.tratarComoString(c.erp_c_code), 50),
+        erp_c_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(c.erp_c_name), 100),
+        erp_c_availability: 'AVAILABLE',
+        erp_p_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(p.nome), 100),
+        erp_p_description: Util.Texto.truncarTexto(Util.Texto.tratarComoString(''), 500),
+        erp_p_category_id: Util.Texto.tratarComoString(p.grupo_id),
+        erp_p_price: Util.Texto.tratarComoNumero(p.preco_venda) ?? 0,
+        erp_p_code: Util.Texto.truncarTexto(Util.Texto.tratarComoString(p.produto_id), 50),
+        erp_p_availability: 'AVAILABLE',
+        erp_p_stock_current: 0,
+        erp_p_stock_active: false,
+        erp_p_variations_grid: false,
+        erp_p_images: null,
+      };
+
+      if (modeloProduct.erp_p_price == 0) {
+        // Util.Log.warn(`${MODULO} | Produto ignorado, preço 0: ID: ${p.id}, Nome: ${p.nome}`);
+        continue;
+      }
+
+      const resultProduto = await Repositorios.ProdutosERP.inserir(modeloProduct);
+      if (!resultProduto) {
+        return {
+          sucesso: false,
+          dados: null,
+          erro: Util.Msg.erroInesperado,
+          total: 1,
+        };
+      }
+
+      totalProdutosEncontrados++;
+
+      // ### VARIAÇÕES ###
+      const variacoes: Partial<IProdutoERP & { itens: ISHGetCombosItens[] }>[] = allVariacoes.dados
+        .filter((v) => v.produto_id == p.produto_id)
+        .map((v) => ({
+          erp_v_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(v.descricao), 100),
+          erp_v_required: !!(v.quantidade_minima && v.quantidade_minima > 0),
+          erp_v_items_min: v.quantidade_minima ?? 0,
+          erp_v_items_max: v.quantidade_maxima ?? 0,
+          erp_v_availability: 'AVAILABLE',
+          erp_v_ordem: typeof v.ordem == 'number' ? v.ordem : 0,
+          itens: v.itens,
+        }));
+
+      for (const v of variacoes) {
+        const modeloVariation: Partial<IProdutoERP> = {
+          ...modeloProduct,
+          type: 'VARIATION_HEADER',
+          empresa_id: empresaId,
+          erp_v_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(v.erp_v_name), 100),
+          erp_v_required: v.erp_v_required,
+          erp_v_items_min: v.erp_v_items_min,
+          erp_v_items_max: v.erp_v_items_max,
+          erp_v_availability: v.erp_v_availability,
+          erp_v_ordem: v.erp_v_ordem,
+          erp_v_name_hash: Util.Texto.gerarHashTexto(Util.Texto.formatarParaTextoSimples(`${modeloProduct.erp_p_code}${v.erp_v_name}`)),
+        };
+
+        const resultVariacao = await Repositorios.ProdutosERP.inserir(modeloVariation);
+        if (!resultVariacao) {
+          return {
+            sucesso: false,
+            dados: null,
+            erro: Util.Msg.erroInesperado,
+            total: 1,
+          };
+        }
+
+        totalVariacoesEncontradas++;
+
+        if (v.itens && v.itens.length > 0) {
+          for (const vi of v.itens) {
+            const produtoItemCombo = allProdutos.dados.find((item) => item.produto_id == vi.produto_id);
+
+            if (!produtoItemCombo) {
+              Util.Log.warn(`${MODULO} | Item de combo ignorado. Produto não encontrado: ${vi.produto_id}`);
+              continue;
+            }
+
+            const modeloItem: Partial<IProdutoERP> = {
+              ...modeloProduct,
+              ...modeloVariation,
+              type: 'VARIATION_ITEM',
+              empresa_id: empresaId,
+              erp_vi_code: '', // CODIGO PDV PREENCHER AQUI **PENDENTE**
+              erp_vi_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(produtoItemCombo.nome), 100),
+              erp_vi_value: Util.Texto.tratarComoNumero(vi.preco_venda) ?? 0,
+              erp_vi_availability: 'AVAILABLE',
+              erp_vi_stock_current: 0,
+              erp_vi_stock_active: false,
+            };
+
+            const resultItem = await Repositorios.ProdutosERP.inserir(modeloItem);
+            if (!resultItem) {
+              return {
+                sucesso: false,
+                dados: null,
+                erro: Util.Msg.erroInesperado,
+                total: 1,
+              };
+            }
+
+            totalVariacoesItemEncontrados++;
+          }
+        }
+      }
+    }
+
+    Util.Log.info(`${MODULO} | Total de categorias encontradas: ${totalCategoriasEncontradas}`);
+    Util.Log.info(`${MODULO} | Total de produtos encontrados: ${totalProdutosEncontrados}`);
+    Util.Log.info(`${MODULO} | Total de variações encontradas: ${totalVariacoesEncontradas}`);
+    Util.Log.info(`${MODULO} | Total de variações item encontrados: ${totalVariacoesItemEncontrados}`);
+
+    return {
+      sucesso: true,
+      dados: Util.Msg.sucesso,
+      erro: null,
+      total: 1,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao alimentar produtos`, error);
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 1,
+    };
+  }
+};
+
 export const SelfHost = {
   extrairDominioEClientId,
   obterClientSecret,
@@ -333,4 +565,5 @@ export const SelfHost = {
   getProdutos,
   getGrupos,
   getCombos,
+  alimentarProdutos,
 };

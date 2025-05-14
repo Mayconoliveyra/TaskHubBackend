@@ -266,3 +266,12 @@ export interface ISHGetCombos {
     nome: string | null;
   }[];
 }
+
+export interface ISHGetCombosItens {
+  id: number;
+  produto_combo_id: number;
+  produto_id: number;
+  preco_venda: number;
+  quantidade: number;
+  nome: string | null;
+}

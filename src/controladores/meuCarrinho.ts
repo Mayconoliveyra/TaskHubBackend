@@ -7,6 +7,7 @@ import { Middlewares } from '../middlewares';
 import { Repositorios } from '../repositorios';
 
 import { Servicos } from '../servicos';
+import { alimentarProdutos } from './../servicos/softcomshop';
 
 import { Util } from '../util';
 
@@ -167,7 +168,7 @@ const teste = async (req: Request, res: Response) => {
   }); */
 
   // const mc = await Servicos.MeuCarrinho.zerarCadastros(empresa_id, empresa.mc_empresa_id || '');
-  const sh = await Servicos.SelfHost.getCombos(empresa_id);
+  const sh = await Servicos.SelfHost.alimentarProdutos(empresa_id);
 
   console.log('sh', sh);
 
