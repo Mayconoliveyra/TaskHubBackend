@@ -4,7 +4,16 @@ import { Util } from '../util';
 import { IRetorno } from '../util/tipagens';
 
 import { Axios } from './axios';
-import { ISHExtrairDominioEClientId, ISHGetEmpresa, ISHGetProdutos, ISHObterClientSecret, ISHObterToken, ISHResponseBase } from './types/selfHost';
+import {
+  ISHExtrairDominioEClientId,
+  ISHGetCombos,
+  ISHGetEmpresa,
+  ISHGetGrupos,
+  ISHGetProdutos,
+  ISHObterClientSecret,
+  ISHObterToken,
+  ISHResponseBase,
+} from './types/selfHost';
 
 const MODULO = '[SelfHost]';
 
@@ -224,10 +233,104 @@ const getProdutos = async (empresaId: number): Promise<IRetorno<ISHGetProdutos[]
   }
 };
 
+const getGrupos = async (empresaId: number): Promise<IRetorno<ISHGetGrupos[]>> => {
+  try {
+    const apiAxiosSH = await Axios.axiosSelfHost(empresaId);
+    if (typeof apiAxiosSH === 'string') {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: apiAxiosSH,
+        total: 1,
+      };
+    }
+    const result: ISHGetGrupos[] = [];
+
+    let page = 1;
+    let countPages = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const response = await apiAxiosSH.get<ISHResponseBase<ISHGetGrupos[]>>(`/api/produtos/grupos/page/${page}`);
+
+      if (response.data.code !== 1) {
+        return {
+          sucesso: false,
+          dados: null,
+          erro: response.data.human || 'Erro ao consultar grupos',
+          total: 1,
+        };
+      }
+
+      const produtos = response.data.data;
+      const currentPage = response.data.meta.page.current;
+      countPages = response.data.meta.page.count;
+
+      result.push(...produtos);
+
+      if (currentPage !== countPages) {
+        page += 1;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    return {
+      sucesso: true,
+      dados: result,
+      erro: null,
+      total: result?.length || 0,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao consultar grupos.`, error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 1,
+    };
+  }
+};
+
+const getCombos = async (empresaId: number): Promise<IRetorno<ISHGetCombos[]>> => {
+  try {
+    const apiAxiosSH = await Axios.axiosSelfHost(empresaId);
+    if (typeof apiAxiosSH === 'string') {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: apiAxiosSH,
+        total: 1,
+      };
+    }
+    // NO MOMENTO QUE FOI IMPLEMENTADO NÃO EXISTIA  PAGINAÇÃO.
+    const response = await apiAxiosSH.get<ISHResponseBase<ISHGetCombos[]>>(`/api/restaurantes/produto-combo`);
+
+    return {
+      sucesso: true,
+      dados: response.data?.data || [],
+      erro: null,
+      total: response.data?.data?.length || 0,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao consultar combos.`, error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 1,
+    };
+  }
+};
+
 export const SelfHost = {
   extrairDominioEClientId,
   obterClientSecret,
   obterToken,
   getEmpresa,
   getProdutos,
+  getGrupos,
+  getCombos,
 };

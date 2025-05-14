@@ -167,7 +167,7 @@ const teste = async (req: Request, res: Response) => {
   }); */
 
   // const mc = await Servicos.MeuCarrinho.zerarCadastros(empresa_id, empresa.mc_empresa_id || '');
-  const sh = await Servicos.SelfHost.getProdutos(empresa_id);
+  const sh = await Servicos.SelfHost.getCombos(empresa_id);
 
   console.log('sh', sh);
 

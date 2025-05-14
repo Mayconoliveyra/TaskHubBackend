@@ -220,3 +220,49 @@ export interface ISHGetProdutos {
   ipi_saida_aliquota: string;
   especifico: any | null;
 }
+
+export interface ISHGetGrupos {
+  nome: string;
+  id: number;
+  grupo_de_acompanhamentos: any | null;
+  vender: boolean;
+  nao_vender: boolean;
+  ot_armacao: boolean;
+  armacao: boolean;
+  ot_lente: boolean;
+  lente: boolean;
+  id_familia_restaurante: number;
+  restaurante_familia_id: number;
+  habilitar_acompanhamento: boolean;
+  acompanhamento_grupo_id: number | null;
+  cobrar_taxa_servico: boolean;
+  self_service: boolean;
+  cobrar_taxa_entrega: boolean;
+  nao_enviar_comanda: boolean;
+  qtd_max: number;
+  habilitar_pizza: boolean | null;
+  tipo_calculo_preco: string;
+  restaurante_setor_impressao_id: number | null;
+  perguntar_adicionais: boolean;
+  observacoes: any[];
+  adicionais: any[];
+}
+
+export interface ISHGetCombos {
+  id: number;
+  descricao: string;
+  produto_id: number;
+  quantidade_minima: number;
+  quantidade_maxima: number;
+  habilitar_pizza: boolean;
+  tipo_calculo_preco: string | null;
+  ordem: number;
+  itens: {
+    id: number;
+    produto_combo_id: number;
+    produto_id: number;
+    preco_venda: number;
+    quantidade: number;
+    nome: string | null;
+  }[];
+}
