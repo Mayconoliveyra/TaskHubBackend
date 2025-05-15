@@ -70,6 +70,7 @@ export interface IVwTarefaProcessar {
   t_nome: string;
   t_descricao_resumo: string;
   t_descricao: string;
+  t_erp: 'SOFTSHOP' | 'SOFTCOMSHOP' | 'TODOS';
   t_simultaneamente: boolean;
   t_ativo: boolean;
 

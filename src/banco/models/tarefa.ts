@@ -4,6 +4,7 @@ export interface ITarefa {
   nome: string;
   descricao_resumo: string;
   descricao: string;
+  erp: 'SOFTSHOP' | 'SOFTCOMSHOP' | 'TODOS';
   simultaneamente: boolean;
   ativo: boolean;
 

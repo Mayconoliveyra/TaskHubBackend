@@ -19,6 +19,7 @@ export async function up(knex: Knex): Promise<void> {
       t.nome AS t_nome,
       t.descricao_resumo AS t_descricao_resumo,
       t.descricao AS t_descricao,
+      t.erp AS t_erp,
 
       CASE 
         WHEN t.param_ss = TRUE THEN 

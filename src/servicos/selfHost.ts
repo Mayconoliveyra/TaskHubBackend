@@ -511,7 +511,7 @@ export const alimentarProdutos = async (empresaId: number): Promise<IRetorno<str
               ...modeloVariation,
               type: 'VARIATION_ITEM',
               empresa_id: empresaId,
-              erp_vi_code: 'TEMP', // CODIGO PDV PREENCHER AQUI **PENDENTE**
+              erp_vi_code: Util.Texto.tratarComoString(vi.codigo_pdv),
               erp_vi_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(produtoItemCombo.nome), 100),
               erp_vi_value: Util.Texto.tratarComoNumero(vi.preco_venda) ?? 0,
               erp_vi_availability: 'AVAILABLE',

@@ -70,6 +70,7 @@ export async function up(knex: Knex): Promise<void> {
       t.nome AS t_nome,
       t.descricao_resumo AS t_descricao_resumo,
       t.descricao AS t_descricao,
+      t.erp AS t_erp,
       t.simultaneamente AS t_simultaneamente,
       t.ativo AS t_ativo,
       t.param_descricao AS t_param_descricao,

@@ -12,6 +12,7 @@ export async function up(knex: Knex) {
       table.string('nome', 30).notNullable().index(); // Nome da tarefa
       table.string('descricao_resumo', 100).notNullable(); // Descrição resumida.
       table.text('descricao').notNullable(); // Descrição detalhada
+      table.enum('erp', ['SOFTSHOP', 'SOFTCOMSHOP', 'TODOS']).notNullable();
 
       table.boolean('simultaneamente').defaultTo(false); // Define se pode executar simultaneamente
       table.boolean('ativo').defaultTo(false); // Indicador se a automação está ativa

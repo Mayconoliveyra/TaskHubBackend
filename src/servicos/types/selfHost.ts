@@ -263,6 +263,7 @@ export interface ISHGetCombos {
     produto_id: number;
     preco_venda: number;
     quantidade: number;
+    codigo_pdv: string;
     nome: string | null;
   }[];
 }
@@ -273,5 +274,6 @@ export interface ISHGetCombosItens {
   produto_id: number;
   preco_venda: number;
   quantidade: number;
+  codigo_pdv: string;
   nome: string | null;
 }
