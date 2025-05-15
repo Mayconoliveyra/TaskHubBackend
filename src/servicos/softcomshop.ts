@@ -356,7 +356,7 @@ const getCombos = async (empresaId: number): Promise<IRetorno<ISSGetCombos[]>> =
   }
 };
 
-export const alimentarProdutos = async (empresaId: number): Promise<IRetorno<string>> => {
+const alimentarProdutos = async (empresaId: number): Promise<IRetorno<string>> => {
   try {
     let totalCategoriasEncontradas = 0;
     let totalProdutosEncontrados = 0;

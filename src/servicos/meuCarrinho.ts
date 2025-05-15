@@ -1189,7 +1189,7 @@ const alimentarProdutos = async (empresaId: number, merchantId: string): Promise
   }
 };
 
-const exportarMercadoriasParaMeuCarrinho = async (empresaId: number, merchantId: string): Promise<IRetorno<string>> => {
+const exportarMercadoriasParaMeuCarrinho = async (empresaId: number, merchantId: string, erp: 'SOFTSHOP' | 'SOFTCOMSHOP'): Promise<IRetorno<string>> => {
   try {
     // 1.1 Alimentar com os produtos do Meu Carrinho
     const resProdsMc = await alimentarProdutos(empresaId, merchantId);
@@ -1203,7 +1203,7 @@ const exportarMercadoriasParaMeuCarrinho = async (empresaId: number, merchantId:
     }
 
     // 1.2 Alimentar com os produtos ERP
-    const resProdsERP = await Servicos.alimentarProdutos(empresaId);
+    const resProdsERP = erp === 'SOFTCOMSHOP' ? await Servicos.SoftcomShop.alimentarProdutos(empresaId) : await Servicos.SelfHost.alimentarProdutos(empresaId);
     if (!resProdsERP.sucesso) {
       return {
         sucesso: false,

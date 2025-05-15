@@ -19,13 +19,14 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
 
   try {
     if (tarefa.t_id === 1) {
-      const result = await Servicos.MeuCarrinho.exportarMercadoriasParaMeuCarrinho(tarefa.e_id, tarefa.e_mc_empresa_id || '');
+      const result = await Servicos.MeuCarrinho.exportarMercadoriasParaMeuCarrinho(tarefa.e_id, tarefa.e_mc_empresa_id || '', tarefa.e_erp);
 
       if (!result.sucesso) {
         await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
           status: 'ERRO',
           feedback: result.erro,
         });
+        Util.Log.error(`${MODULO} | Falha | tId: ${tarefa.t_id} | teId: ${tarefa.te_id}`, result.erro);
       } else {
         await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
           status: 'FINALIZADO',

@@ -7,7 +7,6 @@ import { Middlewares } from '../middlewares';
 import { Repositorios } from '../repositorios';
 
 import { Servicos } from '../servicos';
-import { alimentarProdutos } from './../servicos/softcomshop';
 
 import { Util } from '../util';
 
