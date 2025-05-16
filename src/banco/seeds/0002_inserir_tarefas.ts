@@ -24,6 +24,7 @@ export const seed = async (knex: Knex) => {
         param_sh: false,
         param_mc: true,
         param_api_mkt: false,
+        icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-softcomshop-meucarrinho.png',
       },
       {
         id: 2,

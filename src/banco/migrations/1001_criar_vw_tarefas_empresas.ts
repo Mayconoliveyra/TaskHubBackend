@@ -42,6 +42,7 @@ export async function up(knex: Knex): Promise<void> {
         ELSE NULL
       END AS t_param_mc,
       t.param_api_mkt AS t_param_api_mkt,
+      t.icone AS t_icone,
       te.id AS te_id,
       COALESCE(te.status, 'NOVO') AS te_status,
       te.feedback AS te_feedback,

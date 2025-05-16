@@ -12,6 +12,7 @@ export interface IVwTarefaEmpresa {
   t_param_sh: boolean;
   t_param_mc: boolean;
   t_param_api_mkt: boolean;
+  t_icone: string;
   te_id?: number | null;
   te_status: 'NOVO' | 'PENDENTE' | 'PROCESSANDO' | 'FINALIZADO' | 'CONSULTAR' | 'CANCELADA' | 'ERRO';
   te_feedback?: string | null;

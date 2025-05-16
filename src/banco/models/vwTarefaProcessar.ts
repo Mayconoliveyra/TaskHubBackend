@@ -95,6 +95,7 @@ export interface IVwTarefaProcessar {
   t_param_sh: boolean;
   t_param_mc: boolean;
   t_param_api_mkt: boolean;
+  t_icone: string;
 
   t_created_at: string;
   t_updated_at?: string;

@@ -44,6 +44,8 @@ export async function up(knex: Knex) {
       table.boolean('param_mc').defaultTo(false);
       table.boolean('param_api_mkt').defaultTo(false);
 
+      table.string('icone', 255).notNullable().defaultTo('https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-padrao.png');
+
       table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
       table.timestamp('updated_at').defaultTo(knex.raw('NULL ON UPDATE CURRENT_TIMESTAMP'));
     })

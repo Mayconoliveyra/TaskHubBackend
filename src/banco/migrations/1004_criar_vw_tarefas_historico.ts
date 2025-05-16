@@ -40,6 +40,7 @@ export async function up(knex: Knex): Promise<void> {
       END AS t_param_mc,
 
       t.param_api_mkt AS t_param_api_mkt,
+      t.icone AS t_icone,
 
       -- TAREFA_EMPRESA
       te.id AS te_id,

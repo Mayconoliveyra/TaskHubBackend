@@ -30,6 +30,8 @@ export interface ITarefa {
   param_mc: boolean;
   param_api_mkt: boolean;
 
+  icone: string;
+
   created_at: string;
   updated_at?: string;
 }
