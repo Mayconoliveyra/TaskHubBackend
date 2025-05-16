@@ -24,7 +24,7 @@ export const seed = async (knex: Knex) => {
         param_sh: false,
         param_mc: true,
         param_api_mkt: false,
-        icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-softcomshop-meucarrinho.png',
+        icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-softcomshop-meucarrinho2.png',
       },
       {
         id: 2,
@@ -39,6 +39,7 @@ export const seed = async (knex: Knex) => {
         param_sh: true,
         param_mc: true,
         param_api_mkt: false,
+        icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-meucarrinho-softshop.png',
       },
       {
         id: 3,
@@ -53,6 +54,7 @@ export const seed = async (knex: Knex) => {
         param_sh: false,
         param_mc: true,
         param_api_mkt: false,
+        icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-meu-carrinho.png',
       },
       {
         id: 4,
@@ -66,6 +68,21 @@ export const seed = async (knex: Knex) => {
         param_sh: false,
         param_mc: false,
         param_api_mkt: true,
+        icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-portal-servico.png',
+      },
+      {
+        id: 5,
+        nome: 'Teste',
+        descricao_resumo: 'Remove todos os cadastros de forma permanente.',
+        descricao: `Essa ação apagará de forma irreversível todas as informações registradas, incluindo categorias, produtos, variações e imagens. Além disso, os produtos também serão excluídos dos canais de venda integrados, como Meu Carrinho e Nuvemshop. No caso da Plug4Market, os produtos serão apenas desabilitados, não excluídos.`,
+        erp: 'TODOS',
+        simultaneamente: true,
+        ativo: false,
+        param_ss: false,
+        param_sh: false,
+        param_mc: false,
+        param_api_mkt: true,
+        icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-padrao2.png',
       },
     ])
     .then(() => {
