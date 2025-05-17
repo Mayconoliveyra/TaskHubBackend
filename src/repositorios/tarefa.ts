@@ -48,6 +48,7 @@ const consultar = async (
   filtro: string,
   ordenarPor: string,
   ordem: string,
+  erp: 'SOFTSHOP' | 'SOFTCOMSHOP' | 'TODOS',
 ): Promise<IRetorno<IVwTarefaEmpresa[]>> => {
   try {
     const offset = (pagina - 1) * limite;
@@ -65,10 +66,13 @@ const consultar = async (
       .where('e_id', '=', empresaId)
       .where('e_ativo', '=', true)
       .where('t_ativo', '=', true)
+      .andWhere((qb) => {
+        qb.where('t_erp', '=', erp).orWhere('t_erp', '=', 'TODOS');
+      })
       .modify((queryBuilder) => {
         if (filtro) {
           queryBuilder.where((qb) => {
-            qb.where('t_nome', 'like', `%${filtro}%`).orWhere('t_descricao', 'like', `%${filtro}%`);
+            qb.where('t_nome', 'like', `%${filtro}%`).orWhere('t_descricao_resumo', 'like', `%${filtro}%`);
           });
         }
       })
@@ -81,10 +85,13 @@ const consultar = async (
       .where('e_id', '=', empresaId)
       .where('e_ativo', '=', true)
       .where('t_ativo', '=', true)
+      .andWhere((qb) => {
+        qb.where('t_erp', '=', erp).orWhere('t_erp', '=', 'TODOS');
+      })
       .modify((queryBuilder) => {
         if (filtro) {
           queryBuilder.where((qb) => {
-            qb.where('t_nome', 'like', `%${filtro}%`).orWhere('t_descricao', 'like', `%${filtro}%`);
+            qb.where('t_nome', 'like', `%${filtro}%`).orWhere('t_descricao_resumo', 'like', `%${filtro}%`);
           });
         }
       })

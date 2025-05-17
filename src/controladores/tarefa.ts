@@ -105,7 +105,7 @@ const consultar = async (req: Request<{}, {}, {}, IQueryProps>, res: Response) =
     return res.status(StatusCodes.NOT_FOUND).json({ errors: { default: 'Empresa não encontrada.' } });
   }
 
-  const result = await Repositorios.Tarefa.consultar(empresaId as number, pagina, limite, filtro, ordenarPor, ordem);
+  const result = await Repositorios.Tarefa.consultar(empresaId as number, pagina, limite, filtro, ordenarPor, ordem, empresa.dados.erp);
 
   if (!result.sucesso) {
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
