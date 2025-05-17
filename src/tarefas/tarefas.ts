@@ -18,7 +18,7 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
   Util.Log.info(`${MODULO} | executarTarefa | tId: ${tarefa.t_id} | teId: ${tarefa.te_id}`);
 
   try {
-    if (tarefa.t_id === 1) {
+    if (tarefa.t_id === 1 || tarefa.t_id === 2) {
       const result = await Servicos.MeuCarrinho.exportarMercadoriasParaMeuCarrinho(tarefa.e_id, tarefa.e_mc_empresa_id || '', tarefa.e_erp);
 
       if (!result.sucesso) {
@@ -33,7 +33,7 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
           feedback: 'Processo realizado com sucesso.',
         });
       }
-    } else if (tarefa.t_id === 2) {
+    } else if (tarefa.t_id === 3) {
       const result = await Servicos.MeuCarrinho.zerarCadastros(tarefa.e_id, tarefa.e_mc_empresa_id || '');
 
       if (!result.sucesso) {
