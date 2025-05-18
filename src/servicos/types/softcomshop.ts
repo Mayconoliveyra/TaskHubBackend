@@ -168,7 +168,7 @@ export interface ISSGetProdutos {
   taxa_entrega: string;
   preco_venda: string;
   preco_compra: string;
-  habilitar_acompanhamento: string;
+  habilitar_acompanhamento: '0' | '1' | null;
   self_service: string | null;
   perguntar_adicionais: string | null;
   cobrar_taxa_entrega: string | null;
@@ -201,7 +201,7 @@ export interface ISSGetGrupos {
   armacao: string; // Pode ser "0" ou outro valor
   lente: string; // Pode ser "0" ou outro valor
   restaurante_familia_id: number | null;
-  habilitar_acompanhamento: string | null;
+  habilitar_acompanhamento: '0' | '1' | null;
   acompanhamento_grupo_id: number | null;
   qtd_max: number | null;
   self_service: string | null;
@@ -227,8 +227,8 @@ export interface ISSGetCombos {
   quantidade_minima: number;
   quantidade_maxima: number;
   ordem: number;
-  habilitar_pizza: number;
-  tipo_calculo_preco: number;
+  habilitar_pizza: boolean;
+  tipo_calculo_preco: 1 | 2;
   itens: ISSGetCombosItens[];
 }
 

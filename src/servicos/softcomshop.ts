@@ -468,9 +468,11 @@ const alimentarProdutos = async (empresaId: number): Promise<IRetorno<string>> =
         erp_p_stock_active: false,
         erp_p_variations_grid: false,
         erp_p_images: JSON.stringify(imagens),
+        erp_p_combo: p.habilitar_acompanhamento == '1' ? true : false,
       };
 
-      if (modeloProduct.erp_p_price == 0) {
+      // Se o produto não for combo  e o preço tiver zerado, sera ignorado.
+      if (!modeloProduct.erp_p_combo && modeloProduct.erp_p_price == 0) {
         // Util.Log.warn(`${MODULO} | Produto ignorado, preço 0: ID: ${p.id}, Nome: ${p.nome}`);
         continue;
       }
@@ -493,10 +495,15 @@ const alimentarProdutos = async (empresaId: number): Promise<IRetorno<string>> =
         .map((v) => ({
           erp_v_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(v.descricao), 100),
           erp_v_required: !!(v.quantidade_minima && v.quantidade_minima > 0),
-          erp_v_items_min: v.quantidade_minima ?? 0,
-          erp_v_items_max: v.quantidade_maxima ?? 0,
+          erp_v_items_min: v.quantidade_minima || 0,
+          erp_v_items_max: v.quantidade_maxima || 1,
           erp_v_availability: 'AVAILABLE',
           erp_v_ordem: typeof v.ordem == 'number' ? v.ordem : 0,
+          // - Se `habilitar_pizza` for true:
+          //    - Se `tipo_calculo_preco` for 1, utiliza 'AVG' (média) como tipo de cálculo
+          //    - Caso contrário, utiliza 'MAX' (valor máximo)
+          // - Se `habilitar_pizza` for false, utiliza 'SUM' (soma) como tipo padrão
+          erp_v_calc_type: v.habilitar_pizza == true ? (v.tipo_calculo_preco == 1 ? 'AVG' : 'MAX') : 'SUM',
           itens: v.itens,
         }));
 
@@ -512,6 +519,7 @@ const alimentarProdutos = async (empresaId: number): Promise<IRetorno<string>> =
           erp_v_availability: v.erp_v_availability,
           erp_v_ordem: v.erp_v_ordem,
           erp_v_name_hash: Util.Texto.gerarHashTexto(Util.Texto.formatarParaTextoSimples(`${modeloProduct.erp_p_code}${v.erp_v_name}`)),
+          erp_v_calc_type: v.erp_v_calc_type,
         };
 
         const resultVariacao = await Repositorios.ProdutosERP.inserir(modeloVariation);
