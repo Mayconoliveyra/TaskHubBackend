@@ -3,6 +3,7 @@ import { Knex } from '../banco/knex';
 import { IProdutoERP } from '../banco/models/produtoERP';
 
 import { Util } from '../util';
+import { IFiltro, IRetorno } from '../util/tipagens';
 
 const MODULO = '[Produtos ERP]';
 
@@ -72,4 +73,48 @@ const consultar = async (
     return false;
   }
 };
-export const ProdutosERP = { inserir, apagarProdutosPorEmpresaId, consultarCategorias, consultar, consultarPrimeiroRegistroPorColuna };
+
+const consultarPrimeiroRegistro = async (filtros: IFiltro<IProdutoERP>[]): Promise<IRetorno<IProdutoERP>> => {
+  try {
+    const query = Knex.table(ETableNames.produtos_erp).select('*');
+
+    filtros.forEach((filtro) => {
+      query.where(filtro.coluna, filtro.operador, filtro.valor);
+    });
+
+    const result = await query.first();
+
+    if (result) {
+      return {
+        sucesso: true,
+        dados: result,
+        erro: null,
+        total: 1,
+      };
+    } else {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: 'Nenhum registro foi encontrado.',
+        total: 0,
+      };
+    }
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao consultar primeiro registro com filtros: filtros:${JSON.stringify(filtros)}`, error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 0,
+    };
+  }
+};
+export const ProdutosERP = {
+  inserir,
+  apagarProdutosPorEmpresaId,
+  consultarCategorias,
+  consultar,
+  consultarPrimeiroRegistroPorColuna,
+  consultarPrimeiroRegistro,
+};

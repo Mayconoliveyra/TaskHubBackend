@@ -28,6 +28,7 @@ export async function up(knex: Knex) {
       table.boolean('erp_p_stock_active').nullable();
       table.boolean('erp_p_variations_grid').nullable();
       table.text('erp_p_images').nullable();
+      table.boolean('erp_p_combo').nullable();
 
       // Variação
       table.string('erp_v_name').nullable();
@@ -37,6 +38,7 @@ export async function up(knex: Knex) {
       table.enu('erp_v_availability', ['AVAILABLE', 'UNAVAILABLE']).nullable();
       table.integer('erp_v_ordem').nullable();
       table.string('erp_v_name_hash').nullable();
+      table.enu('erp_v_calc_type', ['SUM', 'AVG', 'MAX']).nullable();
 
       // Item de Variação
       table.string('erp_vi_code').nullable();

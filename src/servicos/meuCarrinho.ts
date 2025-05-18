@@ -1305,9 +1305,6 @@ const exportarMercadoriasParaMeuCarrinho = async (empresaId: number, merchantId:
       const categoriaId = await Repositorios.ProdutosMC.consultarPrimeiroRegistroPorColuna(empresaId, 'CATEGORY', 'c_code', p.erp_c_code || '');
       const produtoJaExistMC = await Repositorios.ProdutosMC.consultarPrimeiroRegistroPorColuna(empresaId, 'PRODUCT', 'p_code', p.erp_p_code || '');
 
-      /*   if (Util.Outros.ehObjetoValido<IMCCriarCategoria>(modeloCategoria, [])) {
-        const resCriarCategoria = await Servicos.MeuCarrinho.criarCategoria(empresaId, modeloCategoria);
- */
       // Se já existe não vou fazer nada
       if (!produtoJaExistMC) {
         if (!categoriaId || !categoriaId.c_id) {
@@ -1325,7 +1322,27 @@ const exportarMercadoriasParaMeuCarrinho = async (empresaId: number, merchantId:
           name: Util.Texto.truncarTexto(p.erp_p_name, 100) || '',
           code: Util.Texto.truncarTexto(p.erp_p_code, 100) || '',
           description: Util.Texto.truncarTexto(p.erp_p_description, 500) || '',
-          price: p.erp_p_price || 0,
+          // Define o preço do produto com base nas seguintes regras:
+          // 1. Se `p.erp_p_price` estiver definido e for maior que 0, utiliza esse valor diretamente.
+          // 2. Caso contrário, realiza uma consulta ao repositório ProdutosERP, buscando o primeiro registro
+          //    com os seguintes filtros:
+          //    - empresa_id igual ao `empresaId`
+          //    - erp_p_code igual ao código do produto atual (ou string vazia, se não definido)
+          //    - erp_v_calc_type diferente de 'SUM'
+          //    Se a consulta retornar sucesso (`.sucesso === true`), define o preço como 0.
+          //    Caso contrário, define o preço como 0.01 (valor mínimo para evitar zero absoluto).
+          price:
+            p.erp_p_price && p.erp_p_price > 0
+              ? p.erp_p_price
+              : (
+                  await Repositorios.ProdutosERP.consultarPrimeiroRegistro([
+                    { coluna: 'empresa_id', operador: '=', valor: empresaId },
+                    { coluna: 'erp_p_code', operador: '=', valor: p.erp_p_code || '' },
+                    { coluna: 'erp_v_calc_type', operador: '<>', valor: 'SUM' },
+                  ])
+                ).sucesso
+              ? 0
+              : 0.01,
         };
 
         const imagesUrl = JSON.parse(p.erp_p_images || '[]') as string[];
@@ -1337,16 +1354,6 @@ const exportarMercadoriasParaMeuCarrinho = async (empresaId: number, merchantId:
               sucesso: false,
               dados: null,
               erro: resCriarProduto.erro,
-              total: 1,
-            };
-          }
-
-          const resAtDisponibilidadeProduto = await Servicos.MeuCarrinho.atDisponibilidadeProduto(empresaId, resCriarProduto.dados.id, 'AVAILABLE');
-          if (!resAtDisponibilidadeProduto.sucesso) {
-            return {
-              sucesso: false,
-              dados: null,
-              erro: resAtDisponibilidadeProduto.erro,
               total: 1,
             };
           }
@@ -1432,6 +1439,7 @@ const exportarMercadoriasParaMeuCarrinho = async (empresaId: number, merchantId:
           required: v.erp_v_required ?? false,
           itemsMin: v.erp_v_items_min ?? 1,
           itemsMax: v.erp_v_items_max ?? 1,
+          calcType: v.erp_v_calc_type ?? 'SUM',
         };
 
         if (Util.Outros.ehObjetoValido<IMCCriarVariacaoCabecalho>(modeloVariacaoCabecalho, [])) {
@@ -1507,9 +1515,9 @@ const exportarMercadoriasParaMeuCarrinho = async (empresaId: number, merchantId:
       }
     }
 
-    // Aguarda 30 segundos antes de iniciar o próximo loop
+    // Aguarda 15 segundos antes de iniciar o próximo loop
     // Necessário para garantir que todas variações cabeçalho já tenham sido inseridas.
-    await Util.Outros.delay(30000);
+    await Util.Outros.delay(15000);
 
     // 5. Cadastrar cabeçalho das variações
     Util.Log.info('Iniciando cadastro de cabeçalhos de variações...');
@@ -1574,6 +1582,29 @@ const exportarMercadoriasParaMeuCarrinho = async (empresaId: number, merchantId:
             total: 1,
           };
         }
+      }
+    }
+
+    // 6. Atualizar disponibilidade do produto principal
+    await Util.Outros.delay(15000); // Aguarda 15 segundos antes de iniciar o próximo loop
+    const produtosMcAtDisponibilidade = await Repositorios.ProdutosMC.consultar(empresaId, 'PRODUCT', { coluna: 'c_name', direcao: 'asc' });
+    if (!produtosMcAtDisponibilidade) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: Util.Msg.erroInesperado,
+        total: 1,
+      };
+    }
+    for (const p of produtosMcAtDisponibilidade) {
+      const resAtDisponibilidadeProduto = await Servicos.MeuCarrinho.atDisponibilidadeProduto(empresaId, p.p_id || '', 'AVAILABLE');
+      if (!resAtDisponibilidadeProduto.sucesso) {
+        return {
+          sucesso: false,
+          dados: null,
+          erro: resAtDisponibilidadeProduto.erro,
+          total: 1,
+        };
       }
     }
 

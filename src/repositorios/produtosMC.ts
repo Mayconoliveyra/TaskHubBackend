@@ -57,4 +57,26 @@ const consultarPrimeiroRegistroPorColuna = async (empresaId: number, type: IProd
   }
 };
 
-export const ProdutosMC = { inserir, apagarProdutosPorEmpresaId, consultarCategorias, consultarPrimeiroRegistroPorColuna };
+const consultar = async (
+  empresaId: number,
+  type: IProdutoMC['type'],
+  orderBy: { coluna: keyof IProdutoMC; direcao?: 'asc' | 'desc' } = { coluna: 'id', direcao: 'asc' },
+) => {
+  try {
+    return await Knex(ETableNames.produtos_mc)
+      .where('empresa_id', '=', empresaId)
+      .andWhere('type', '=', type)
+      .orderBy(orderBy.coluna, orderBy.direcao || 'asc');
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao consultar ${type.toLowerCase()}.`, error);
+    return false;
+  }
+};
+
+export const ProdutosMC = {
+  inserir,
+  apagarProdutosPorEmpresaId,
+  consultarCategorias,
+  consultarPrimeiroRegistroPorColuna,
+  consultar,
+};

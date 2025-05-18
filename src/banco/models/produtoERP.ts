@@ -20,6 +20,7 @@ export interface IProdutoERP {
   erp_p_stock_active: boolean | null; // Whether stock is active
   erp_p_variations_grid: boolean | null; // Indicates if variations grid is enabled
   erp_p_images: string | null; // Variation Name
+  erp_p_combo: boolean | null; // define se o produto é combo.
 
   erp_v_name: string | null; // Variation Name
   erp_v_required: boolean | null; // Whether the variation is required
@@ -28,6 +29,7 @@ export interface IProdutoERP {
   erp_v_availability: Availability | null; // Variation availability
   erp_v_ordem: number | null;
   erp_v_name_hash: string | null; // v_name codificado
+  erp_v_calc_type: 'SUM' | 'AVG' | 'MAX' | null; // tipo de calculo; soma, media, maior valor
 
   erp_vi_code: string | null; // Variation item code
   erp_vi_name: string | null; // Variation item name

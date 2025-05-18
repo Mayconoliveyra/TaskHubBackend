@@ -12,7 +12,7 @@ export type IRetorno<T = any> =
       total: number;
     };
 
-export type IOperador = '=' | '!=' | '<' | '<=' | '>' | '>=' | 'like';
+export type IOperador = '=' | '<>' | '!=' | '<' | '<=' | '>' | '>=' | 'like';
 
 export interface IFiltro<T> {
   coluna: keyof T;

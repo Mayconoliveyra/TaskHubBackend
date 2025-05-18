@@ -240,8 +240,8 @@ export interface ISHGetGrupos {
   cobrar_taxa_entrega: boolean;
   nao_enviar_comanda: boolean;
   qtd_max: number;
-  habilitar_pizza: boolean | null;
-  tipo_calculo_preco: string;
+  habilitar_pizza: boolean; // true => quando habilitado calculo pizza
+  tipo_calculo_preco: 1 | 2 | null; // 2 = MAIOR PRECO; 1 = MEDIA; NULL = NENHUMA OPCAO
   restaurante_setor_impressao_id: number | null;
   perguntar_adicionais: boolean;
   observacoes: any[];
@@ -254,8 +254,8 @@ export interface ISHGetCombos {
   produto_id: number;
   quantidade_minima: number;
   quantidade_maxima: number;
-  habilitar_pizza: boolean;
-  tipo_calculo_preco: string | null;
+  habilitar_pizza: boolean; // true => quando habilitado calculo pizza
+  tipo_calculo_preco: 1 | 2 | null; // 2 = MAIOR PRECO; 1 = MEDIA; NULL = NENHUMA OPCAO
   ordem: number;
   itens: {
     id: number;

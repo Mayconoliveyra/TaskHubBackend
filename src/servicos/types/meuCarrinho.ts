@@ -319,6 +319,7 @@ export interface IMCCriarVariacaoCabecalho {
   required: boolean;
   itemsMin: number;
   itemsMax: number;
+  calcType: 'SUM' | 'AVG' | 'MAX';
 }
 
 export interface IMCCriarVariacaoCabecalhoResponse {
@@ -331,7 +332,7 @@ export interface IMCCriarVariacaoCabecalhoResponse {
   colorHex: string | null;
   priority: number;
   availability: 'AVAILABLE' | 'UNAVAILABLE';
-  calcType: string;
+  calcType: 'SUM' | 'AVG' | 'MAX';
   items: [];
 }
 
