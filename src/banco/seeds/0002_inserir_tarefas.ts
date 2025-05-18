@@ -23,7 +23,7 @@ export const seed = async (knex: Knex) => {
         param_ss: true,
         param_sh: false,
         param_mc: true,
-        param_api_mkt: false,
+        param_api_im: false,
         icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-softcomshop-meucarrinho2.png',
       },
       {
@@ -38,7 +38,7 @@ export const seed = async (knex: Knex) => {
         param_ss: false,
         param_sh: true,
         param_mc: true,
-        param_api_mkt: false,
+        param_api_im: false,
         icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-meucarrinho-softshop.png',
       },
       {
@@ -53,7 +53,7 @@ export const seed = async (knex: Knex) => {
         param_ss: false,
         param_sh: false,
         param_mc: true,
-        param_api_mkt: false,
+        param_api_im: false,
         icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-meu-carrinho.png',
       },
       {
@@ -67,7 +67,7 @@ export const seed = async (knex: Knex) => {
         param_ss: false,
         param_sh: false,
         param_mc: false,
-        param_api_mkt: true,
+        param_api_im: true,
         icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-portal-servico.png',
       },
       {
@@ -81,7 +81,7 @@ export const seed = async (knex: Knex) => {
         param_ss: false,
         param_sh: false,
         param_mc: false,
-        param_api_mkt: true,
+        param_api_im: true,
         icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-padrao2.png',
       },
     ])

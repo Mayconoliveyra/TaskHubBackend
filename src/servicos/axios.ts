@@ -11,6 +11,7 @@ const DEFAULT_TIMEOUT = 60 * 1000; // 60 segundos
 const DEFAULT_TIMEOUT_MC = 60 * 1000; // 60 segundos
 const DEFAULT_TIMEOUT_SS = 60 * 1000; // 60 segundos
 const DEFAULT_TIMEOUT_SH = 60 * 1000; // 60 segundos
+const DEFAULT_TIMEOUT_IM = 60 * 1000; // 60 segundos
 
 // Interface para configurar novas instâncias
 interface IAxiosInstanceParams {
@@ -194,6 +195,54 @@ const axiosSelfHost = async (empresaId: number) => {
   }
 };
 
+const axiosApiMarketplace = async (empresaId: number) => {
+  try {
+    const empresa = await Repositorios.Empresa.consultarPrimeiroRegistro([{ coluna: 'id', operador: '=', valor: empresaId }]);
+
+    if (!empresa.sucesso) {
+      return empresa.erro;
+    }
+
+    if (!empresa.dados.mc_usuario || !empresa.dados.mc_senha || !empresa.dados.mc_token) {
+      return `Os parâmetros são obrigatórios: MC_USUARIO:${empresa.dados.mc_usuario}; MC_SENHA:${empresa.dados.mc_senha}; MC_TOKEN:${empresa.dados.mc_token};`;
+    }
+
+    const timeCurrent = Util.DataHora.obterTimestampUnixAtual();
+    if (timeCurrent > empresa.dados.mc_token_exp) {
+      const resToken = await Servicos.MeuCarrinho.autenticar(empresa.dados.mc_usuario || '', empresa.dados.mc_senha || '');
+
+      if (!resToken.sucesso) {
+        return resToken.erro;
+      }
+
+      const resAtDados = await Repositorios.Empresa.atualizarDados(empresaId, {
+        mc_token: resToken.dados.token,
+        mc_token_exp: resToken.dados.expiresAt,
+      });
+
+      if (!resAtDados.sucesso) {
+        return resAtDados.erro;
+      }
+
+      return Axios.createAxiosInstance({
+        baseURL: 'https://api.meucarrinho.delivery',
+        headers: { Authorization: `Bearer ${resToken.dados.token}`, 'Content-Type': 'application/json' },
+        timeout: DEFAULT_TIMEOUT_MC,
+      });
+    }
+
+    return Axios.createAxiosInstance({
+      baseURL: 'https://api.meucarrinho.delivery',
+      headers: { Authorization: `Bearer ${empresa.dados.mc_token || ''}`, 'Content-Type': 'application/json' },
+      timeout: DEFAULT_TIMEOUT_MC,
+    });
+  } catch (error) {
+    Util.Log.error(`[Meu Carrinho] | Erro ao criar ou atualizar instância axios.`, error);
+
+    return Util.Msg.erroInesperado;
+  }
+};
+
 // Instância padrão
 export const defaultAxios: AxiosInstance = createAxiosInstance();
 
@@ -203,4 +252,5 @@ export const Axios = {
   axiosMeuCarrinho,
   axiosSoftcomshop,
   axiosSelfHost,
+  axiosApiMarketplace,
 };

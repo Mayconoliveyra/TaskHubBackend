@@ -59,6 +59,12 @@ export interface IVwTarefaProcessar {
   e_sh_token?: string | null;
   e_sh_token_exp: number;
 
+  e_api_im_client_id?: string | null;
+  e_api_im_client_secret?: string | null;
+  e_api_im_empresa_id?: string | null;
+  e_api_im_empresa_nome?: string | null;
+  e_api_im_empresa_cnpj?: string | null;
+
   e_ativo: boolean;
   e_prox_sinc_sh_token: number;
 
@@ -94,7 +100,7 @@ export interface IVwTarefaProcessar {
   t_param_ss: boolean;
   t_param_sh: boolean;
   t_param_mc: boolean;
-  t_param_api_mkt: boolean;
+  t_param_api_im: boolean;
   t_icone: string;
 
   t_created_at: string;

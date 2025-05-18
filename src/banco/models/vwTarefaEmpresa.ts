@@ -11,7 +11,7 @@ export interface IVwTarefaEmpresa {
   t_param_ss: boolean;
   t_param_sh: boolean;
   t_param_mc: boolean;
-  t_param_api_mkt: boolean;
+  t_param_api_im: boolean;
   t_icone: string;
   te_id?: number | null;
   te_status: 'NOVO' | 'PENDENTE' | 'PROCESSANDO' | 'FINALIZADO' | 'CONSULTAR' | 'CANCELADA' | 'ERRO';
@@ -20,4 +20,5 @@ export interface IVwTarefaEmpresa {
   ss_autenticado: boolean;
   mc_autenticado: boolean;
   sh_autenticado: boolean;
+  api_im_autenticado: boolean;
 }

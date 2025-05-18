@@ -41,7 +41,14 @@ export async function up(knex: Knex): Promise<void> {
           END
         ELSE NULL
       END AS t_param_mc,
-      t.param_api_mkt AS t_param_api_mkt,
+      CASE 
+        WHEN t.param_api_im = TRUE THEN 
+          CASE 
+            WHEN e.api_im_empresa_id IS NOT NULL THEN TRUE 
+            ELSE FALSE 
+          END
+        ELSE NULL
+      END AS t_param_api_im,
       t.icone AS t_icone,
       te.id AS te_id,
       COALESCE(te.status, 'NOVO') AS te_status,
@@ -51,7 +58,8 @@ export async function up(knex: Knex): Promise<void> {
       -- Verificação dos tokens
       CASE WHEN e.ss_token IS NOT NULL THEN TRUE ELSE FALSE END AS ss_autenticado,
       CASE WHEN e.mc_token IS NOT NULL THEN TRUE ELSE FALSE END AS mc_autenticado,
-      CASE WHEN e.sh_token IS NOT NULL THEN TRUE ELSE FALSE END AS sh_autenticado
+      CASE WHEN e.sh_token IS NOT NULL THEN TRUE ELSE FALSE END AS sh_autenticado,
+      CASE WHEN e.api_im_empresa_id IS NOT NULL THEN TRUE ELSE FALSE END AS api_im_autenticado
     FROM empresas e
     CROSS JOIN tarefas t
     LEFT JOIN (

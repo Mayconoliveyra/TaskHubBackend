@@ -41,6 +41,12 @@ export async function up(knex: Knex) {
       table.text('sh_token');
       table.bigInteger('sh_token_exp').notNullable().defaultTo(0);
 
+      table.string('api_im_client_id', 255);
+      table.string('api_im_client_secret', 255);
+      table.string('api_im_empresa_id', 255);
+      table.string('api_im_empresa_nome', 255);
+      table.string('api_im_empresa_cnpj', 255);
+
       table.boolean('ativo').defaultTo(true);
 
       table.bigInteger('prox_sinc_sh_token').notNullable().defaultTo(0);
