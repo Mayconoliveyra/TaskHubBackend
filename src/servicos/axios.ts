@@ -1,5 +1,5 @@
 // src/services/axios.ts
-import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, AxiosError, AxiosRequestConfig } from 'axios';
 
 import { Repositorios } from '../repositorios';
 
@@ -14,7 +14,7 @@ const DEFAULT_TIMEOUT_SH = 60 * 1000; // 60 segundos
 const DEFAULT_TIMEOUT_IM = 60 * 1000; // 60 segundos
 
 // Interface para configurar novas instâncias
-interface IAxiosInstanceParams {
+interface IAxiosInstanceParams extends AxiosRequestConfig {
   baseURL?: string;
   timeout?: number;
   headers?: Record<string, string>;
@@ -39,11 +39,12 @@ const errorInterceptor = (error: AxiosError): Promise<never> => {
 };
 
 // Factory de instância de Axios
-export const createAxiosInstance = ({ baseURL, timeout = DEFAULT_TIMEOUT, headers }: IAxiosInstanceParams = {}): AxiosInstance => {
+export const createAxiosInstance = ({ baseURL, timeout = DEFAULT_TIMEOUT, headers, ...rest }: IAxiosInstanceParams = {}): AxiosInstance => {
   const instance = axios.create({
     baseURL,
     timeout,
     headers,
+    ...rest,
   });
 
   instance.interceptors.response.use(responseInterceptor, errorInterceptor);
@@ -203,41 +204,23 @@ const axiosApiMarketplace = async (empresaId: number) => {
       return empresa.erro;
     }
 
-    if (!empresa.dados.mc_usuario || !empresa.dados.mc_senha || !empresa.dados.mc_token) {
-      return `Os parâmetros são obrigatórios: MC_USUARIO:${empresa.dados.mc_usuario}; MC_SENHA:${empresa.dados.mc_senha}; MC_TOKEN:${empresa.dados.mc_token};`;
-    }
-
-    const timeCurrent = Util.DataHora.obterTimestampUnixAtual();
-    if (timeCurrent > empresa.dados.mc_token_exp) {
-      const resToken = await Servicos.MeuCarrinho.autenticar(empresa.dados.mc_usuario || '', empresa.dados.mc_senha || '');
-
-      if (!resToken.sucesso) {
-        return resToken.erro;
-      }
-
-      const resAtDados = await Repositorios.Empresa.atualizarDados(empresaId, {
-        mc_token: resToken.dados.token,
-        mc_token_exp: resToken.dados.expiresAt,
-      });
-
-      if (!resAtDados.sucesso) {
-        return resAtDados.erro;
-      }
-
-      return Axios.createAxiosInstance({
-        baseURL: 'https://api.meucarrinho.delivery',
-        headers: { Authorization: `Bearer ${resToken.dados.token}`, 'Content-Type': 'application/json' },
-        timeout: DEFAULT_TIMEOUT_MC,
-      });
+    if (!empresa.dados.api_im_client_id || !empresa.dados.api_im_client_secret || !empresa.dados.api_im_empresa_id) {
+      return `Os parâmetros são obrigatórios: api_im_client_id:${empresa.dados.api_im_client_id}; api_im_client_secret:${empresa.dados.api_im_client_secret}; api_im_empresa_id:${empresa.dados.api_im_empresa_id};`;
     }
 
     return Axios.createAxiosInstance({
-      baseURL: 'https://api.meucarrinho.delivery',
-      headers: { Authorization: `Bearer ${empresa.dados.mc_token || ''}`, 'Content-Type': 'application/json' },
-      timeout: DEFAULT_TIMEOUT_MC,
+      baseURL: 'https://api-imkt.softcomservices.com',
+      timeout: DEFAULT_TIMEOUT_IM,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      auth: {
+        username: empresa.dados.api_im_client_id,
+        password: empresa.dados.api_im_client_secret,
+      },
     });
   } catch (error) {
-    Util.Log.error(`[Meu Carrinho] | Erro ao criar ou atualizar instância axios.`, error);
+    Util.Log.error(`[Api Marketplace] | Erro ao criar ou atualizar instância axios.`, error);
 
     return Util.Msg.erroInesperado;
   }

@@ -2,7 +2,7 @@ import { Util } from '../util';
 import { IRetorno } from '../util/tipagens';
 
 import { Axios } from './axios';
-import { IApiIMErroValidacao, IApiIMAutenticar } from './types/apiMarketplace';
+import { IApiIMErroValidacao, IApiIMAutenticar, IApiIMGetMarketplaces, IApiIMGetProdutos, IApiIMGetCategorias } from './types/apiMarketplace';
 
 const BASE_URL_API_IMK = 'https://api-imkt.softcomservices.com';
 
@@ -63,6 +63,296 @@ const autenticar = async (clientId: string, clientSecret: string): Promise<IReto
   }
 };
 
+const getMarketplaces = async (empresaId: number): Promise<IRetorno<IApiIMGetMarketplaces[]>> => {
+  try {
+    const apiAxiosApiIM = await Axios.axiosApiMarketplace(empresaId);
+    if (typeof apiAxiosApiIM === 'string') {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: apiAxiosApiIM,
+        total: 1,
+      };
+    }
+
+    const response = await apiAxiosApiIM.get<IApiIMGetMarketplaces[]>(`/marketplaces`);
+
+    return {
+      sucesso: true,
+      dados: response.data,
+      erro: null,
+      total: response.data?.length || 0,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao consultar marketplaces.`, error);
+    const erroTratado = formatarErroValidacao(error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: erroTratado,
+      total: 1,
+    };
+  }
+};
+
+const getProdutos = async (empresaId: number): Promise<IRetorno<IApiIMGetProdutos[]>> => {
+  try {
+    const apiAxiosApiIM = await Axios.axiosApiMarketplace(empresaId);
+    if (typeof apiAxiosApiIM === 'string') {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: apiAxiosApiIM,
+        total: 1,
+      };
+    }
+
+    const result: IApiIMGetProdutos[] = [];
+
+    const pageSize = 500;
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const response = await apiAxiosApiIM.get<IApiIMGetProdutos[]>(`/products?pageNumber=${page}&pageSize=${pageSize}`);
+      const produtos = response.data;
+
+      if (produtos.length > 0) {
+        result.push(...produtos);
+        page += 1;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    return {
+      sucesso: true,
+      dados: result,
+      erro: null,
+      total: result?.length || 0,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao consultar produtos.`, error);
+    const erroTratado = formatarErroValidacao(error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: erroTratado,
+      total: 1,
+    };
+  }
+};
+
+const getCategorias = async (empresaId: number): Promise<IRetorno<IApiIMGetCategorias[]>> => {
+  try {
+    const apiAxiosApiIM = await Axios.axiosApiMarketplace(empresaId);
+    if (typeof apiAxiosApiIM === 'string') {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: apiAxiosApiIM,
+        total: 1,
+      };
+    }
+
+    const result: IApiIMGetCategorias[] = [];
+
+    const pageSize = 50;
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const response = await apiAxiosApiIM.get<IApiIMGetCategorias[]>(`/categories?pageNumber=${page}&pageSize=${pageSize}`);
+      const produtos = response.data;
+
+      if (produtos.length > 0) {
+        result.push(...produtos);
+        page += 1;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    return {
+      sucesso: true,
+      dados: result,
+      erro: null,
+      total: result?.length || 0,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao consultar categorias.`, error);
+    const erroTratado = formatarErroValidacao(error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: erroTratado,
+      total: 1,
+    };
+  }
+};
+
+const deleteProdutoPorId = async (empresaId: number, code: string): Promise<IRetorno<{ code: string }>> => {
+  try {
+    const apiAxiosApiIM = await Axios.axiosApiMarketplace(empresaId);
+    if (typeof apiAxiosApiIM === 'string') {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: apiAxiosApiIM,
+        total: 1,
+      };
+    }
+
+    await apiAxiosApiIM.delete(`/products/${code}`);
+
+    return {
+      sucesso: true,
+      dados: { code: code },
+      erro: null,
+      total: 1,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao apagar produto. Code: ${code}`, error);
+    const erroTratado = formatarErroValidacao(error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: erroTratado,
+      total: 1,
+    };
+  }
+};
+
+const deleteCategoriaPorId = async (empresaId: number, code: string): Promise<IRetorno<{ code: string }>> => {
+  try {
+    const apiAxiosApiIM = await Axios.axiosApiMarketplace(empresaId);
+    if (typeof apiAxiosApiIM === 'string') {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: apiAxiosApiIM,
+        total: 1,
+      };
+    }
+
+    await apiAxiosApiIM.delete(`/categories/${code}`);
+
+    return {
+      sucesso: true,
+      dados: { code: code },
+      erro: null,
+      total: 1,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao apagar categoria. Code: ${code}`, error);
+    const erroTratado = formatarErroValidacao(error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: erroTratado,
+      total: 1,
+    };
+  }
+};
+
+const zerarIntegracao = async (empresaId: number): Promise<IRetorno<string>> => {
+  try {
+    const [resGetMarketplaces, resGetCategorias] = await Promise.all([getMarketplaces(empresaId), getCategorias(empresaId)]);
+    if (!resGetMarketplaces.sucesso) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: resGetMarketplaces.erro,
+        total: 1,
+      };
+    }
+    if (!resGetCategorias.sucesso) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: resGetCategorias.erro,
+        total: 1,
+      };
+    }
+
+    if (resGetCategorias.dados.length === 0) {
+      return {
+        sucesso: true,
+        dados: 'A integração já está vazia. Caso ainda existam produtos no canal de destino, aguarde alguns minutos até que a sincronização seja concluída.',
+        erro: null,
+        total: 1,
+      };
+    }
+
+    // Verifica os marketplaces integrados, se tiver utilizando Showkase exclui os produtos antes.
+    const ehShowkase = resGetMarketplaces.dados.find((canal) => canal.marketplaceName === 'Showkase');
+    if (ehShowkase && ehShowkase.active) {
+      const resGetProdutos = await getProdutos(empresaId);
+      if (!resGetProdutos.sucesso) {
+        return {
+          sucesso: false,
+          dados: null,
+          erro: resGetProdutos.erro,
+          total: 1,
+        };
+      }
+
+      for (const p of resGetProdutos.dados) {
+        const resDelete = await deleteProdutoPorId(empresaId, p.code);
+        if (!resDelete.sucesso) {
+          return {
+            sucesso: false,
+            dados: null,
+            erro: resDelete.erro,
+            total: 1,
+          };
+        }
+      }
+
+      // Aguarda 15s por garantia
+      await Util.Outros.delay(15000);
+    }
+
+    for (const c of resGetCategorias.dados) {
+      const resDelete = await deleteCategoriaPorId(empresaId, c.code || '');
+      if (!resDelete.sucesso) {
+        return {
+          sucesso: false,
+          dados: null,
+          erro: resDelete.erro,
+          total: 1,
+        };
+      }
+    }
+
+    return {
+      sucesso: true,
+      dados: 'Integração zerada com sucesso.',
+      erro: null,
+      total: 1,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao zerar integração.`, error);
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 1,
+    };
+  }
+};
+
 export const ApiMarketplace = {
   autenticar,
+  getMarketplaces,
+  getProdutos,
+  getCategorias,
+  deleteProdutoPorId,
+  deleteCategoriaPorId,
+  zerarIntegracao,
 };
