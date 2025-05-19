@@ -33,6 +33,12 @@ export interface IEmpresa {
   sh_token?: string | null;
   sh_token_exp: number;
 
+  api_im_client_id?: string | null;
+  api_im_client_secret?: string | null;
+  api_im_empresa_id?: string | null;
+  api_im_empresa_nome?: string | null;
+  api_im_empresa_cnpj?: string | null;
+
   ativo: boolean;
 
   prox_sinc_sh_token: number;

@@ -39,6 +39,7 @@ export async function up(knex: Knex): Promise<void> {
       e.nome AS e_nome,
       e.cnpj_cpf AS e_cnpj_cpf,
       e.erp AS e_erp,
+      
       e.ss_qrcode_url AS e_ss_qrcode_url,
       e.ss_url AS e_ss_url,
       e.ss_client_id AS e_ss_client_id,
@@ -47,6 +48,7 @@ export async function up(knex: Knex): Promise<void> {
       e.ss_empresa_cnpj AS e_ss_empresa_cnpj,
       e.ss_token AS e_ss_token,
       e.ss_token_exp AS e_ss_token_exp,
+
       e.mc_usuario AS e_mc_usuario,
       e.mc_senha AS e_mc_senha,
       e.mc_empresa_id AS e_mc_empresa_id,
@@ -54,12 +56,21 @@ export async function up(knex: Knex): Promise<void> {
       e.mc_empresa_cnpj AS e_mc_empresa_cnpj,
       e.mc_token AS e_mc_token,
       e.mc_token_exp AS e_mc_token_exp,
+
       e.sh_qrcode_url AS e_sh_qrcode_url,
       e.sh_url AS e_sh_url,
       e.sh_client_id AS e_sh_client_id,
       e.sh_client_secret AS e_sh_client_secret,
       e.sh_token AS e_sh_token,
       e.sh_token_exp AS e_sh_token_exp,
+
+      e.api_im_client_id AS e_api_im_client_id,
+      e.api_im_client_secret AS e_api_im_client_secret,
+      e.api_im_empresa_id AS e_api_im_empresa_id,
+      e.api_im_empresa_nome AS e_api_im_empresa_nome,
+      e.api_im_empresa_cnpj AS e_api_im_empresa_cnpj,
+
+
       e.ativo AS e_ativo,
       e.prox_sinc_sh_token AS e_prox_sinc_sh_token,
       e.created_at AS e_created_at,
@@ -92,7 +103,7 @@ export async function up(knex: Knex): Promise<void> {
       t.param_ss AS t_param_ss,
       t.param_sh AS t_param_sh,
       t.param_mc AS t_param_mc,
-      t.param_api_mkt AS t_param_api_mkt,
+      t.param_api_im AS t_param_api_im,
       t.icone AS t_icone,
       t.created_at AS t_created_at,
       t.updated_at AS t_updated_at,

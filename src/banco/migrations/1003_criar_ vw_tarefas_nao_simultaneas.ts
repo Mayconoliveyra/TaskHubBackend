@@ -92,7 +92,7 @@ export async function up(knex: Knex): Promise<void> {
       t.param_ss AS t_param_ss,
       t.param_sh AS t_param_sh,
       t.param_mc AS t_param_mc,
-      t.param_api_mkt AS t_param_api_mkt,
+      t.param_api_im AS t_param_api_im,
       t.icone AS t_icone,
       t.created_at AS t_created_at,
       t.updated_at AS t_updated_at,

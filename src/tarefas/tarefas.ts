@@ -47,6 +47,20 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
           feedback: 'Processo realizado com sucesso.',
         });
       }
+    } else if (tarefa.t_id === 4) {
+      const result = await Servicos.ApiMarketplace.zerarIntegracao(tarefa.e_id);
+
+      if (!result.sucesso) {
+        await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
+          status: 'ERRO',
+          feedback: result.erro,
+        });
+      } else {
+        await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
+          status: 'FINALIZADO',
+          feedback: result.dados,
+        });
+      }
     } else {
       Util.Log.error(`${MODULO} | executarTarefa | Nenhuma execução definida para a tarefa: ${tarefa.t_nome}`);
 

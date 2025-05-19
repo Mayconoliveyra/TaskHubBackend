@@ -23,7 +23,7 @@ export const seed = async (knex: Knex) => {
         param_ss: true,
         param_sh: false,
         param_mc: true,
-        param_api_mkt: false,
+        param_api_im: false,
         icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-softcomshop-meucarrinho2.png',
       },
       {
@@ -38,7 +38,7 @@ export const seed = async (knex: Knex) => {
         param_ss: false,
         param_sh: true,
         param_mc: true,
-        param_api_mkt: false,
+        param_api_im: false,
         icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-meucarrinho-softshop.png',
       },
       {
@@ -53,21 +53,24 @@ export const seed = async (knex: Knex) => {
         param_ss: false,
         param_sh: false,
         param_mc: true,
-        param_api_mkt: false,
+        param_api_im: false,
         icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-meu-carrinho.png',
       },
       {
         id: 4,
         nome: 'Zerar Api Marketplace',
         descricao_resumo: 'Remove todos os cadastros de forma permanente.',
-        descricao: `Essa ação apagará de forma irreversível todas as informações registradas, incluindo categorias, produtos, variações e imagens. Além disso, os produtos também serão excluídos dos canais de venda integrados, como Meu Carrinho e Nuvemshop. No caso da Plug4Market, os produtos serão apenas desabilitados, não excluídos.`,
+        descricao: `
+Essa ação apagará de forma irreversível todas as informações registradas, incluindo categorias, produtos, variações e imagens. Os produtos também serão removidos dos canais de venda integrados (Meu Carrinho, ShowKase e Nuvemshop). No caso da Plug4Market, os produtos serão apenas desabilitados, e não excluídos.
+Além disso, será necessário executar o script no banco de dados do cliente para zerar o status de integração no sistema de retaguarda — consulte o FAQ nº 7116.
+Antes de reenviar os dados para a integração, acesse o canal de venda e verifique se todos os produtos foram realmente excluídos. Caso ainda estejam visíveis, aguarde alguns minutos. Se mesmo assim os produtos não forem removidos, realize a exclusão manual diretamente no canal de venda.`,
         erp: 'TODOS',
         simultaneamente: true,
         ativo: true,
         param_ss: false,
         param_sh: false,
         param_mc: false,
-        param_api_mkt: true,
+        param_api_im: true,
         icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-portal-servico.png',
       },
       {
@@ -81,7 +84,7 @@ export const seed = async (knex: Knex) => {
         param_ss: false,
         param_sh: false,
         param_mc: false,
-        param_api_mkt: true,
+        param_api_im: true,
         icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-padrao2.png',
       },
     ])

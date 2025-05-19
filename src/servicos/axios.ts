@@ -1,5 +1,5 @@
 // src/services/axios.ts
-import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, AxiosError, AxiosRequestConfig } from 'axios';
 
 import { Repositorios } from '../repositorios';
 
@@ -11,9 +11,10 @@ const DEFAULT_TIMEOUT = 60 * 1000; // 60 segundos
 const DEFAULT_TIMEOUT_MC = 60 * 1000; // 60 segundos
 const DEFAULT_TIMEOUT_SS = 60 * 1000; // 60 segundos
 const DEFAULT_TIMEOUT_SH = 60 * 1000; // 60 segundos
+const DEFAULT_TIMEOUT_IM = 60 * 1000; // 60 segundos
 
 // Interface para configurar novas instâncias
-interface IAxiosInstanceParams {
+interface IAxiosInstanceParams extends AxiosRequestConfig {
   baseURL?: string;
   timeout?: number;
   headers?: Record<string, string>;
@@ -38,11 +39,12 @@ const errorInterceptor = (error: AxiosError): Promise<never> => {
 };
 
 // Factory de instância de Axios
-export const createAxiosInstance = ({ baseURL, timeout = DEFAULT_TIMEOUT, headers }: IAxiosInstanceParams = {}): AxiosInstance => {
+export const createAxiosInstance = ({ baseURL, timeout = DEFAULT_TIMEOUT, headers, ...rest }: IAxiosInstanceParams = {}): AxiosInstance => {
   const instance = axios.create({
     baseURL,
     timeout,
     headers,
+    ...rest,
   });
 
   instance.interceptors.response.use(responseInterceptor, errorInterceptor);
@@ -194,6 +196,36 @@ const axiosSelfHost = async (empresaId: number) => {
   }
 };
 
+const axiosApiMarketplace = async (empresaId: number) => {
+  try {
+    const empresa = await Repositorios.Empresa.consultarPrimeiroRegistro([{ coluna: 'id', operador: '=', valor: empresaId }]);
+
+    if (!empresa.sucesso) {
+      return empresa.erro;
+    }
+
+    if (!empresa.dados.api_im_client_id || !empresa.dados.api_im_client_secret || !empresa.dados.api_im_empresa_id) {
+      return `Os parâmetros são obrigatórios: api_im_client_id:${empresa.dados.api_im_client_id}; api_im_client_secret:${empresa.dados.api_im_client_secret}; api_im_empresa_id:${empresa.dados.api_im_empresa_id};`;
+    }
+
+    return Axios.createAxiosInstance({
+      baseURL: 'https://api-imkt.softcomservices.com',
+      timeout: DEFAULT_TIMEOUT_IM,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      auth: {
+        username: empresa.dados.api_im_client_id,
+        password: empresa.dados.api_im_client_secret,
+      },
+    });
+  } catch (error) {
+    Util.Log.error(`[Api Marketplace] | Erro ao criar ou atualizar instância axios.`, error);
+
+    return Util.Msg.erroInesperado;
+  }
+};
+
 // Instância padrão
 export const defaultAxios: AxiosInstance = createAxiosInstance();
 
@@ -203,4 +235,5 @@ export const Axios = {
   axiosMeuCarrinho,
   axiosSoftcomshop,
   axiosSelfHost,
+  axiosApiMarketplace,
 };

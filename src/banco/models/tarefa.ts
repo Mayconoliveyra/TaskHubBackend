@@ -28,7 +28,7 @@ export interface ITarefa {
   param_ss: boolean;
   param_sh: boolean;
   param_mc: boolean;
-  param_api_mkt: boolean;
+  param_api_im: boolean;
 
   icone: string;
 

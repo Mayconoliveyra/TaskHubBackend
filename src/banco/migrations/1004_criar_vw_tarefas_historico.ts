@@ -39,7 +39,15 @@ export async function up(knex: Knex): Promise<void> {
         ELSE NULL
       END AS t_param_mc,
 
-      t.param_api_mkt AS t_param_api_mkt,
+      CASE 
+        WHEN t.param_api_im = TRUE THEN 
+          CASE 
+            WHEN e.api_im_empresa_id IS NOT NULL THEN TRUE 
+            ELSE FALSE 
+          END
+        ELSE NULL
+      END AS t_param_api_im,
+
       t.icone AS t_icone,
 
       -- TAREFA_EMPRESA
@@ -49,9 +57,10 @@ export async function up(knex: Knex): Promise<void> {
       te.updated_at AS te_updated_at,
 
       -- TOKENS VÁLIDOS
-      CASE WHEN e.ss_token_exp IS NOT NULL AND e.ss_token_exp > UNIX_TIMESTAMP() THEN TRUE ELSE FALSE END AS ss_autenticado,
-      CASE WHEN e.mc_token_exp IS NOT NULL AND e.mc_token_exp > UNIX_TIMESTAMP() THEN TRUE ELSE FALSE END AS mc_autenticado,
-      CASE WHEN e.sh_token_exp IS NOT NULL AND e.sh_token_exp > UNIX_TIMESTAMP() THEN TRUE ELSE FALSE END AS sh_autenticado
+      CASE WHEN e.ss_token IS NOT NULL THEN TRUE ELSE FALSE END AS ss_autenticado,
+      CASE WHEN e.mc_token IS NOT NULL THEN TRUE ELSE FALSE END AS mc_autenticado,
+      CASE WHEN e.sh_token IS NOT NULL THEN TRUE ELSE FALSE END AS sh_autenticado,
+      CASE WHEN e.api_im_empresa_id IS NOT NULL THEN TRUE ELSE FALSE END AS api_im_autenticado
 
     FROM tarefa_empresa te
     INNER JOIN tarefas t ON te.tarefa_id = t.id

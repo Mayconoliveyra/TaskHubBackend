@@ -20,9 +20,15 @@ router.get('/empresa/:empresaId', Controladores.Empresa.consultarPorIdValidacao,
 router.post('/configuracoes/softcomshop', Controladores.SoftcomShop.configuracaoValidacao, Controladores.SoftcomShop.configuracao);
 router.post('/configuracoes/meu-carrinho', Controladores.MeuCarrinho.configuracaoValidacao, Controladores.MeuCarrinho.configuracao);
 router.post('/configuracoes/self-host', Controladores.SelfHost.configuracaoValidacao, Controladores.SelfHost.configuracao);
+router.post('/configuracoes/api-marketplace', Controladores.ApiMarketplace.configuracaoValidacao, Controladores.ApiMarketplace.configuracao);
 router.get('/configuracoes/meu-carrinho/testar-conexao/:empresaId', Controladores.MeuCarrinho.testarConexaoValidacao, Controladores.MeuCarrinho.testarConexao);
 router.get('/configuracoes/softcomshop/testar-conexao/:empresaId', Controladores.SoftcomShop.testarConexaoValidacao, Controladores.SoftcomShop.testarConexao);
 router.get('/configuracoes/self-host/testar-conexao/:empresaId', Controladores.SelfHost.testarConexaoValidacao, Controladores.SelfHost.testarConexao);
+router.get(
+  '/configuracoes/api-marketplace/testar-conexao/:empresaId',
+  Controladores.ApiMarketplace.testarConexaoValidacao,
+  Controladores.ApiMarketplace.testarConexao,
+);
 
 router.get('/tarefa', Controladores.Tarefa.consultarValidacao, Controladores.Tarefa.consultar);
 router.post('/tarefa/solicitar', Controladores.Tarefa.solicitarValidacao, Controladores.Tarefa.solicitar);
