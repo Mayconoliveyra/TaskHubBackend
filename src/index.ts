@@ -14,10 +14,10 @@ const startServer = () => {
     console.log(`App rodando na porta ${PORT_HTTP} (http)`);
   });
 
-  Configs.ExpressConfig.serverHttps.listen(PORT_HTTPS, () => {
+  /*   Configs.ExpressConfig.serverHttps.listen(PORT_HTTPS, () => {
     console.log(`App rodando na porta ${PORT_HTTPS} (https)`);
   });
-
+ */
   Tarefas.Tarefas.processarTarefas();
 };
 
