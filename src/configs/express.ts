@@ -2,14 +2,12 @@ import 'dotenv/config';
 
 import express from 'express';
 import http from 'http';
-import https from 'https';
 
 import { JSONParseError } from '../middlewares/JSONParseError';
 
 import { router } from '../rotas';
 
 import { CorsConfig } from './cors';
-import { HttpsConfig } from './https';
 import { MorganConfig } from './morgan';
 import { YupConfig } from './yup';
 
@@ -25,6 +23,5 @@ app.use(express.json());
 app.use(router);
 
 const serverHttp = http.createServer(app);
-const serverHttps = https.createServer(HttpsConfig.httpsOptions, app);
 
-export const ExpressConfig = { app, serverHttp, serverHttps };
+export const ExpressConfig = { app, serverHttp };
