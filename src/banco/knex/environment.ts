@@ -43,13 +43,11 @@ const production: Knex.Config = {
   client: 'mysql2',
   migrations: {
     directory: path.resolve(__dirname, '..', 'migrations'),
-    extension: 'js',
   },
   seeds: {
     directory: path.resolve(__dirname, '..', 'seeds'),
-    extension: 'js',
   },
-  connection: { ...connection, database: process.env.DATABASE_NAME },
+  connection: { ...connection, database: `${process.env.DATABASE_NAME}` },
   pool: {
     min: 2, // Conexões mínimas
     max: 15, // Conexões máximas

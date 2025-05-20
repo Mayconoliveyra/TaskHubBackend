@@ -4,20 +4,17 @@ import { Configs } from './configs';
 
 import { Tarefas } from './tarefas';
 
+import { Util } from './util';
+
 const { NODE_ENV } = process.env;
 
-const PORT_HTTP = NODE_ENV === 'dev' ? 8081 : 80;
-const PORT_HTTPS = 443;
+const PORT_HTTP = NODE_ENV === 'dev' ? 8081 : 2025;
 
 const startServer = () => {
   Configs.ExpressConfig.serverHttp.listen(PORT_HTTP, () => {
-    console.log(`App rodando na porta ${PORT_HTTP} (http)`);
+    Util.Log.info(`TaskHub | App rodando | Porta: ${PORT_HTTP} | Prot.: HTTP | Ambiente: ${NODE_ENV}`);
   });
 
-  /*   Configs.ExpressConfig.serverHttps.listen(PORT_HTTPS, () => {
-    console.log(`App rodando na porta ${PORT_HTTPS} (https)`);
-  });
- */
   Tarefas.Tarefas.processarTarefas();
 };
 
