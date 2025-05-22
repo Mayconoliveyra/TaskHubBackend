@@ -13,43 +13,11 @@ export const seed = async (knex: Knex) => {
     .insert([
       {
         id: 1,
-        registro: '1',
-        nome: 'EMPRESA TESTE',
-        cnpj_cpf: '1',
+        registro: '53539',
+        nome: 'SOFTCOM TESTE',
+        cnpj_cpf: '99999999000191',
         erp: 'SOFTCOMSHOP',
         ativo: true,
-      },
-      {
-        id: 2,
-        registro: '2',
-        nome: 'EMPRESA TESTE 002',
-        cnpj_cpf: '2',
-        erp: 'SOFTCOMSHOP',
-        ativo: true,
-      },
-      {
-        id: 3,
-        registro: '3',
-        nome: 'EMPRESA TESTE 003',
-        cnpj_cpf: '3',
-        erp: 'SOFTCOMSHOP',
-        ativo: true,
-      },
-      {
-        id: 4,
-        registro: '4',
-        nome: 'EMPRESA TESTE 004',
-        cnpj_cpf: '4',
-        erp: 'SOFTCOMSHOP',
-        ativo: true,
-      },
-      {
-        id: 5,
-        registro: '5',
-        nome: 'EMPRESA TESTE 005',
-        cnpj_cpf: '5',
-        erp: 'SOFTCOMSHOP',
-        ativo: false,
       },
     ])
     .then(() => {
