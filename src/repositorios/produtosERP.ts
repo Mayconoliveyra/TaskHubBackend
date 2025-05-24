@@ -110,6 +110,40 @@ const consultarPrimeiroRegistro = async (filtros: IFiltro<IProdutoERP>[]): Promi
     };
   }
 };
+
+const atualizarDados = async (empresaId: number, coluna: keyof IProdutoERP, valorBuscar: string, data: Partial<IProdutoERP>): Promise<IRetorno<string>> => {
+  try {
+    const result = await Knex(ETableNames.produtos_erp)
+      .where('empresa_id', '=', empresaId)
+      .where(coluna, '=', valorBuscar)
+      .update({ ...data });
+
+    if (result) {
+      return {
+        sucesso: true,
+        dados: Util.Msg.sucesso,
+        erro: null,
+        total: 1,
+      };
+    } else {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: Util.Msg.erroInesperado,
+        total: 0,
+      };
+    }
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao atualizar dados.`, error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 0,
+    };
+  }
+};
 export const ProdutosERP = {
   inserir,
   apagarProdutosPorEmpresaId,
@@ -117,4 +151,5 @@ export const ProdutosERP = {
   consultar,
   consultarPrimeiroRegistroPorColuna,
   consultarPrimeiroRegistro,
+  atualizarDados,
 };

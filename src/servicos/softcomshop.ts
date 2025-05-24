@@ -357,6 +357,42 @@ const getCombos = async (empresaId: number): Promise<IRetorno<ISSGetCombos[]>> =
 };
 
 const alimentarProdutos = async (empresaId: number): Promise<IRetorno<string>> => {
+  const gerarDescricaoComboFixoDeVariacoes = (
+    variacoes: Partial<IProdutoERP & { itens?: ISSGetCombosItens[] }>[],
+    allProdutos: ISSGetProdutos[],
+  ): { descricao: string | null; precoTotal: number } => {
+    try {
+      const linhas: string[] = [];
+      let precoTotal = 0;
+
+      for (const v of variacoes) {
+        if (!v.itens || !Array.isArray(v.itens)) continue;
+
+        for (const item of v.itens) {
+          if (item.quantidade && item.quantidade > 0) {
+            const produto = allProdutos.find((p) => p.produto_id == item.produto_id);
+            const nome = produto?.nome?.trim() || 'Produto desconhecido';
+
+            const subtotal = (item.quantidade ?? 0) * (Util.Texto.tratarComoNumero(item.preco_venda) ?? 0);
+            precoTotal += subtotal;
+
+            linhas.push(`x${item.quantidade} ${nome}`);
+          }
+        }
+      }
+
+      if (linhas.length === 0) return { descricao: null, precoTotal: 0 };
+
+      return {
+        descricao: `Itens que compõem o combo:\n${linhas.join('\n')}`,
+        precoTotal,
+      };
+    } catch (error) {
+      Util.Log.error(`${MODULO} | ComboFixo | Erro ao gerar descrição de combo fixo`, error);
+      return { descricao: null, precoTotal: 0 };
+    }
+  };
+
   try {
     let totalCategoriasEncontradas = 0;
     let totalProdutosEncontrados = 0;
@@ -492,81 +528,106 @@ const alimentarProdutos = async (empresaId: number): Promise<IRetorno<string>> =
       // ### VARIAÇÕES ###
       const variacoes: Partial<IProdutoERP & { itens: ISSGetCombosItens[] }>[] = allVariacoes.dados
         .filter((v) => v.produto_id == p.produto_id)
-        .map((v) => ({
-          erp_v_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(v.descricao), 100),
-          erp_v_required: !!(v.quantidade_minima && v.quantidade_minima > 0),
-          erp_v_items_min: v.quantidade_minima || 0,
-          erp_v_items_max: v.quantidade_maxima || 1,
-          erp_v_availability: 'AVAILABLE',
-          erp_v_ordem: typeof v.ordem == 'number' ? v.ordem : 0,
-          // - Se `habilitar_pizza` for true:
-          //    - Se `tipo_calculo_preco` for 1, utiliza 'AVG' (média) como tipo de cálculo
-          //    - Caso contrário, utiliza 'MAX' (valor máximo)
-          // - Se `habilitar_pizza` for false, utiliza 'SUM' (soma) como tipo padrão
-          erp_v_calc_type: v.habilitar_pizza == true ? (v.tipo_calculo_preco == 1 ? 'AVG' : 'MAX') : 'SUM',
-          itens: v.itens,
-        }));
+        .map((v) => {
+          const erpVRequired = !!(v.quantidade_minima && v.quantidade_minima > 0); // Define se a variação é obrigatória.
 
-      for (const v of variacoes) {
-        const modeloVariation: Partial<IProdutoERP> = {
+          return {
+            erp_v_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(v.descricao), 100),
+            erp_v_required: erpVRequired,
+            erp_v_items_min: erpVRequired ? v.quantidade_minima : 0,
+            // 99 porque se o usuario preencher com 0 na retaguarda, ele pode definir a quantidade que quiser na hora de passar no caixa.
+            erp_v_items_max: v.quantidade_maxima && v.quantidade_maxima > 0 ? v.quantidade_maxima : 99,
+            erp_v_availability: 'AVAILABLE',
+            erp_v_ordem: typeof v.ordem == 'number' ? v.ordem : 0,
+            // - Se `habilitar_pizza` for true:
+            //    - Se `tipo_calculo_preco` for 1, utiliza 'AVG' (média) como tipo de cálculo
+            //    - Caso contrário, utiliza 'MAX' (valor máximo)
+            // - Se `habilitar_pizza` for false, utiliza 'SUM' (soma) como tipo padrão
+            erp_v_calc_type: v.habilitar_pizza == true ? (v.tipo_calculo_preco == 1 ? 'AVG' : 'MAX') : 'SUM',
+            itens: v.itens,
+          };
+        });
+
+      // Se o combo for tipo fixo vai retornar descrição dos itens do combo.
+      // O produto vai ser cadastrado como comum, mas a descrição vai ser os itens do combo.
+      const descricaoComboFixo = gerarDescricaoComboFixoDeVariacoes(variacoes, allProdutos.dados);
+      if (descricaoComboFixo.descricao && descricaoComboFixo.precoTotal > 0) {
+        const resultProdutoAt = await Repositorios.ProdutosERP.atualizarDados(empresaId, 'erp_p_code', modeloProduct.erp_p_code || '', {
           ...modeloProduct,
-          type: 'VARIATION_HEADER',
-          empresa_id: empresaId,
-          erp_v_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(v.erp_v_name), 100),
-          erp_v_required: v.erp_v_required,
-          erp_v_items_min: v.erp_v_items_min,
-          erp_v_items_max: v.erp_v_items_max,
-          erp_v_availability: v.erp_v_availability,
-          erp_v_ordem: v.erp_v_ordem,
-          erp_v_name_hash: Util.Texto.gerarHashTexto(Util.Texto.formatarParaTextoSimples(`${modeloProduct.erp_p_code}${v.erp_v_name}`)),
-          erp_v_calc_type: v.erp_v_calc_type,
-        };
-
-        const resultVariacao = await Repositorios.ProdutosERP.inserir(modeloVariation);
-        if (!resultVariacao) {
+          erp_p_description: Util.Texto.truncarTexto(descricaoComboFixo.descricao, 500),
+          erp_p_price: descricaoComboFixo.precoTotal + (modeloProduct?.erp_p_price || 0),
+          erp_p_combo: false,
+        });
+        if (!resultProdutoAt.sucesso) {
           return {
             sucesso: false,
             dados: null,
-            erro: Util.Msg.erroInesperado,
+            erro: resultProdutoAt.erro,
             total: 1,
           };
         }
+      } else {
+        for (const v of variacoes) {
+          const modeloVariation: Partial<IProdutoERP> = {
+            ...modeloProduct,
+            type: 'VARIATION_HEADER',
+            empresa_id: empresaId,
+            erp_v_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(v.erp_v_name), 100),
+            erp_v_required: v.erp_v_required,
+            erp_v_items_min: v.erp_v_items_min,
+            erp_v_items_max: v.erp_v_items_max,
+            erp_v_availability: v.erp_v_availability,
+            erp_v_ordem: v.erp_v_ordem,
+            erp_v_name_hash: Util.Texto.gerarHashTexto(Util.Texto.formatarParaTextoSimples(`${modeloProduct.erp_p_code}${v.erp_v_name}`)),
+            erp_v_calc_type: v.erp_v_calc_type,
+          };
 
-        totalVariacoesEncontradas++;
-
-        if (v.itens && v.itens.length > 0) {
-          for (const vi of v.itens) {
-            const produtoItemCombo = allProdutos.dados.find((item) => item.produto_id == vi.produto_id);
-
-            if (!produtoItemCombo) {
-              Util.Log.warn(`${MODULO} | Item de combo ignorado. Produto não encontrado: ${vi.produto_id}`);
-              continue;
-            }
-
-            const modeloItem: Partial<IProdutoERP> = {
-              ...modeloProduct,
-              ...modeloVariation,
-              type: 'VARIATION_ITEM',
-              empresa_id: empresaId,
-              erp_vi_code: vi.codigo_pdv,
-              erp_vi_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(produtoItemCombo.nome), 100),
-              erp_vi_value: Util.Texto.tratarComoNumero(vi.preco_venda) ?? 0,
-              erp_vi_availability: 'AVAILABLE',
-              erp_vi_stock_current: 0,
-              erp_vi_stock_active: false,
+          const resultVariacao = await Repositorios.ProdutosERP.inserir(modeloVariation);
+          if (!resultVariacao) {
+            return {
+              sucesso: false,
+              dados: null,
+              erro: Util.Msg.erroInesperado,
+              total: 1,
             };
+          }
 
-            const resultItem = await Repositorios.ProdutosERP.inserir(modeloItem);
-            if (!resultItem) {
-              return {
-                sucesso: false,
-                dados: null,
-                erro: Util.Msg.erroInesperado,
-                total: 1,
+          totalVariacoesEncontradas++;
+
+          if (v.itens && v.itens.length > 0) {
+            for (const vi of v.itens) {
+              const produtoItemCombo = allProdutos.dados.find((item) => item.produto_id == vi.produto_id);
+
+              if (!produtoItemCombo) {
+                Util.Log.warn(`${MODULO} | Item de combo ignorado. Produto não encontrado: ${vi.produto_id}`);
+                continue;
+              }
+
+              const modeloItem: Partial<IProdutoERP> = {
+                ...modeloProduct,
+                ...modeloVariation,
+                type: 'VARIATION_ITEM',
+                empresa_id: empresaId,
+                erp_vi_code: vi.codigo_pdv,
+                erp_vi_name: Util.Texto.truncarTexto(Util.Texto.tratarComoString(produtoItemCombo.nome), 100),
+                erp_vi_value: Util.Texto.tratarComoNumero(vi.preco_venda) ?? 0,
+                erp_vi_availability: 'AVAILABLE',
+                erp_vi_stock_current: 0,
+                erp_vi_stock_active: false,
               };
-            }
 
-            totalVariacoesItemEncontrados++;
+              const resultItem = await Repositorios.ProdutosERP.inserir(modeloItem);
+              if (!resultItem) {
+                return {
+                  sucesso: false,
+                  dados: null,
+                  erro: Util.Msg.erroInesperado,
+                  total: 1,
+                };
+              }
+
+              totalVariacoesItemEncontrados++;
+            }
           }
         }
       }
