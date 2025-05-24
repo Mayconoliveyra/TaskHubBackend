@@ -8,7 +8,8 @@
   "scripts": {
     "start": "npx ts-node-dev ./src/index.ts",
     "build": "tsc",
-    "server": "pm2 start ./build/index.js --name taskhub --env production"
+    "server": "pm2 start ./build/index.js --name taskhub --env production",
+    "rollback": "ts-node ./node_modules/knex/bin/cli.js migrate:rollback --knexfile knexfile.ts"
   },
   "dependencies": {
     "fs-extra": "11.2.0",

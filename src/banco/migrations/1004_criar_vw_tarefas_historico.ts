@@ -5,7 +5,9 @@ import { Util } from '../../util';
 import { ETableNames } from '../eTableNames';
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.raw(`
+  await knex
+    .raw(
+      `
     CREATE VIEW ${ETableNames.vw_tarefas_historico} AS
     SELECT 
       -- EMPRESAS
@@ -65,11 +67,15 @@ export async function up(knex: Knex): Promise<void> {
     FROM tarefa_empresa te
     INNER JOIN tarefas t ON te.tarefa_id = t.id
     INNER JOIN empresas e ON te.empresa_id = e.id
-  `);
-
-  Util.Log.info(`# Criado view ${ETableNames.vw_tarefas_historico}`);
+  `,
+    )
+    .then(() => {
+      Util.Log.info(`# Criado view ${ETableNames.vw_tarefas_historico}`);
+    });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.raw(`DROP VIEW IF EXISTS ${ETableNames.vw_tarefas_historico};`);
+  await knex.raw(`DROP VIEW IF EXISTS ${ETableNames.vw_tarefas_historico};`).then(() => {
+    Util.Log.info(`# Excluído view ${ETableNames.vw_tarefas_historico}`);
+  });
 }

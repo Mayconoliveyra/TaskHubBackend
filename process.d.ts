@@ -1,6 +1,6 @@
 declare namespace NodeJS {
   export interface ProcessEnv {
-    NODE_ENV?: 'dev' | 'test' | 'production';
+    NODE_ENV?: 'dev' | 'production';
 
     DATABASE_HOST?: string;
     DATABASE_USER?: string;

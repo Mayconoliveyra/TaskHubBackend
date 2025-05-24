@@ -5,7 +5,9 @@ import { Util } from '../../util';
 import { ETableNames } from '../eTableNames';
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.raw(`
+  await knex
+    .raw(
+      `
     CREATE VIEW ${ETableNames.vw_tarefas_simultaneas} AS
     SELECT
       -- Colunas da tabela tarefa_empresa (prefixo te_)
@@ -129,11 +131,15 @@ export async function up(knex: Knex): Promise<void> {
     JOIN empresas e ON te.empresa_id = e.id
     JOIN tarefas t ON te.tarefa_id = t.id
     WHERE t.simultaneamente = true;
-  `);
-
-  Util.Log.info(`# Criado view ${ETableNames.vw_tarefas_simultaneas}`);
+  `,
+    )
+    .then(() => {
+      Util.Log.info(`# Criado view ${ETableNames.vw_tarefas_simultaneas}`);
+    });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.raw(`DROP VIEW IF EXISTS ${ETableNames.vw_tarefas_simultaneas};`);
+  await knex.raw(`DROP VIEW IF EXISTS ${ETableNames.vw_tarefas_simultaneas};`).then(() => {
+    Util.Log.info(`# Excluído view ${ETableNames.vw_tarefas_simultaneas}`);
+  });
 }

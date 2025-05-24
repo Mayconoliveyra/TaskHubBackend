@@ -10,17 +10,8 @@ export const seed = async (knex: Knex) => {
   if (result) return;
 
   await knex(ETableNames.empresas)
-    .insert([
-      {
-        id: 1,
-        registro: '53539',
-        nome: 'SOFTCOM TESTE',
-        cnpj_cpf: '99999999000191',
-        erp: 'SOFTCOMSHOP',
-        ativo: true,
-      },
-    ])
+    .insert([])
     .then(() => {
-      console.log(`# Inserido dados na tabela ${ETableNames.empresas}`);
+      console.log(`DEV - Inserido dados na tabela ${ETableNames.empresas}`);
     });
 };

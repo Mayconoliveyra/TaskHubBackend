@@ -5,7 +5,9 @@ import { Util } from '../../util';
 import { ETableNames } from '../eTableNames';
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.raw(`
+  await knex
+    .raw(
+      `
     CREATE VIEW ${ETableNames.vw_tarefas_empresas} AS
     SELECT 
       e.id AS e_id,
@@ -75,11 +77,15 @@ export async function up(knex: Knex): Promise<void> {
           GROUP BY tarefa_id, empresa_id
         ) te2 ON te1.id = te2.max_id
     ) te ON te.tarefa_id = t.id AND te.empresa_id = e.id;
-  `);
-
-  Util.Log.info(`# Criado view ${ETableNames.vw_tarefas_empresas}`);
+  `,
+    )
+    .then(() => {
+      Util.Log.info(`# Criado view ${ETableNames.vw_tarefas_empresas}`);
+    });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.raw(`DROP VIEW IF EXISTS ${ETableNames.vw_tarefas_empresas};`);
+  await knex.raw(`DROP VIEW IF EXISTS ${ETableNames.vw_tarefas_empresas};`).then(() => {
+    Util.Log.info(`# Excluído view ${ETableNames.vw_tarefas_empresas}`);
+  });
 }

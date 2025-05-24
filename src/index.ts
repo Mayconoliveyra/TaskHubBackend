@@ -8,7 +8,7 @@ import { Util } from './util';
 
 const { NODE_ENV } = process.env;
 
-const PORT_HTTP = NODE_ENV === 'dev' ? 8081 : 2025;
+const PORT_HTTP = NODE_ENV === 'production' ? 2025 : 8081;
 
 const startServer = () => {
   Configs.ExpressConfig.serverHttp.listen(PORT_HTTP, () => {
