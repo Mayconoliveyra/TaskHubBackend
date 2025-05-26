@@ -9,5 +9,6 @@ declare namespace NodeJS {
     DATABASE_PASSWORD?: string;
 
     JWT_SECRET?: string;
+    OPENAI_API_KEY?: string;
   }
 }

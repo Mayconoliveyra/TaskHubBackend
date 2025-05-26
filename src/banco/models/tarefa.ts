@@ -32,6 +32,8 @@ export interface ITarefa {
 
   icone: string;
 
+  modal: string;
+
   created_at: string;
   updated_at?: string;
 }

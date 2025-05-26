@@ -8,7 +8,7 @@ export async function up(knex: Knex): Promise<void> {
   await knex
     .raw(
       `
-    CREATE VIEW ${ETableNames.vw_tarefas_simultaneas} AS
+    CREATE OR REPLACE VIEW ${ETableNames.vw_tarefas_simultaneas} AS
     SELECT
       -- Colunas da tabela tarefa_empresa (prefixo te_)
       te.id AS te_id,
@@ -107,6 +107,7 @@ export async function up(knex: Knex): Promise<void> {
       t.param_mc AS t_param_mc,
       t.param_api_im AS t_param_api_im,
       t.icone AS t_icone,
+      t.modal AS t_modal,
       t.created_at AS t_created_at,
       t.updated_at AS t_updated_at,
 
