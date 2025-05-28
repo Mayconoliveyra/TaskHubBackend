@@ -19,6 +19,7 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
 
   try {
     if (tarefa.t_id === 2 || tarefa.t_id === 3) {
+      // DataSyncFood - Meu Carrinho
       const result = await Servicos.MeuCarrinho.exportarMercadoriasParaMeuCarrinho(tarefa.e_id, tarefa.e_mc_empresa_id || '', tarefa.e_erp);
 
       if (!result.sucesso) {
@@ -34,6 +35,7 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
         });
       }
     } else if (tarefa.t_id === 4) {
+      //Zerar Meu Carrinho
       const result = await Servicos.MeuCarrinho.zerarCadastros(tarefa.e_id, tarefa.e_mc_empresa_id || '');
 
       if (!result.sucesso) {
@@ -48,7 +50,30 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
         });
       }
     } else if (tarefa.t_id === 5) {
+      // Zerar Api Marketplace
       const result = await Servicos.ApiMarketplace.zerarIntegracao(tarefa.e_id);
+
+      if (!result.sucesso) {
+        await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
+          status: 'ERRO',
+          feedback: result.erro,
+        });
+      } else {
+        await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
+          status: 'FINALIZADO',
+          feedback: result.dados,
+        });
+      }
+    } else if (tarefa.t_id === 6) {
+      // Analise NFSe
+
+      const modeloIA = tarefa.t_param_01 || '';
+      const padraoNFSe = tarefa.te_param_01 || '';
+      const xmlRejeitado = tarefa.te_param_02 || '';
+      const xmlAutorizado = tarefa.te_param_03 || '';
+      const prompt = Servicos.OpenaiIA.promptAnaliseNFSe(modeloIA, xmlRejeitado, xmlAutorizado);
+      const result = await Servicos.OpenaiIA.gerarResposta(prompt);
+      console.log(result);
 
       if (!result.sucesso) {
         await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {

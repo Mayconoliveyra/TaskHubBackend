@@ -4,7 +4,6 @@ export interface ITarefaEmpresa {
   tarefa_id: number;
   empresa_id: number;
 
-  param_descricao?: string | null;
   param_01?: string | null;
   param_02?: string | null;
   param_03?: string | null;

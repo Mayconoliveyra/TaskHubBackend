@@ -21,11 +21,10 @@ Ao final da análise, serão apresentados relatórios claros com as diferenças 
       param_mc: false,
       param_api_im: false,
       icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-analise-doc2.png',
-      param_descricao: `
-      param_01 = modelo de IA a ser utilizado.
-      `,
+      param_descricao: `param_01 = Modelo de IA a ser utilizado;`,
       param_01: 'mistralai/mistral-7b-instruct',
       modal: 'ANALISE_NFSE',
+      te_param_descricao: 'param_01 = Padrão do município; param_02 = XML rejeitado; param_03 = XML Autorizado;',
     })
     .then(() => {
       Util.Log.info(`# Inserido registro | Id: ${id} | tabela: ${ETableNames.tarefas}`);

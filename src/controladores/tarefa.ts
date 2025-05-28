@@ -170,7 +170,18 @@ const solicitar = async (req: Request<{}, {}, IBodySolicitarProps>, res: Respons
     }
   }
 
-  const resultSolicitar = await Repositorios.TarefaEmpresa.solicitar({ empresa_id, tarefa_id, status: 'PENDENTE' });
+  const resultSolicitar = await Repositorios.TarefaEmpresa.solicitar(
+    tarefa_id === 6
+      ? {
+          empresa_id,
+          tarefa_id,
+          status: 'PENDENTE',
+          param_01,
+          param_02,
+          param_03,
+        }
+      : { empresa_id, tarefa_id, status: 'PENDENTE' },
+  );
   if (resultSolicitar.sucesso) {
     return res.status(StatusCodes.NO_CONTENT).send();
   } else {

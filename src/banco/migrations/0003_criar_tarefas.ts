@@ -22,21 +22,22 @@ export async function up(knex: Knex) {
        * Exemplo: versão, modelo, token específico, entre outros.
        */
       table.text('param_descricao').nullable(); // Descrição dos parâmetros adicionais
-      table.string('param_01', 255).nullable();
-      table.string('param_02', 255).nullable();
-      table.string('param_03', 255).nullable();
-      table.string('param_04', 255).nullable();
-      table.string('param_05', 255).nullable();
-      table.string('param_06', 255).nullable();
-      table.string('param_07', 255).nullable();
-      table.string('param_08', 255).nullable();
-      table.string('param_09', 255).nullable();
-      table.string('param_10', 255).nullable();
-      table.string('param_11', 255).nullable();
-      table.string('param_12', 255).nullable();
-      table.string('param_13', 255).nullable();
-      table.string('param_14', 255).nullable();
-      table.string('param_15', 255).nullable();
+      table.text('param_01').nullable();
+      table.text('param_02').nullable();
+      table.text('param_03').nullable();
+      table.text('param_04').nullable();
+      table.text('param_05').nullable();
+      table.text('param_06').nullable();
+      table.text('param_07').nullable();
+      table.text('param_08').nullable();
+      table.text('param_09').nullable();
+      table.text('param_10').nullable();
+      table.text('param_11').nullable();
+      table.text('param_12').nullable();
+      table.text('param_13').nullable();
+      table.text('param_14').nullable();
+      table.text('param_15').nullable();
+      table.text('te_param_descricao').nullable(); // Descrição dos parâmetros adicionais em tarefa_empresa
 
       // Parâmetros de configurações necessárias
       table.boolean('param_ss').defaultTo(false);

@@ -24,6 +24,7 @@ export interface ITarefa {
   param_13?: string | null;
   param_14?: string | null;
   param_15?: string | null;
+  te_param_descricao?: string | null;
 
   param_ss: boolean;
   param_sh: boolean;
