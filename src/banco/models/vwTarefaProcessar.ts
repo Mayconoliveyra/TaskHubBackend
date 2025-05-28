@@ -80,6 +80,7 @@ export interface IVwTarefaProcessar {
   t_simultaneamente: boolean;
   t_ativo: boolean;
 
+  t_param_descricao?: string | null;
   t_param_01?: string | null;
   t_param_02?: string | null;
   t_param_03?: string | null;

@@ -22,6 +22,7 @@ export async function up(knex: Knex): Promise<void> {
       t.descricao_resumo AS t_descricao_resumo,
       t.descricao AS t_descricao,
       t.erp AS t_erp,
+      t.param_descricao AS t_param_descricao,
       t.te_param_descricao AS t_te_param_descricao,
 
       CASE 

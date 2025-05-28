@@ -8,6 +8,7 @@ export interface IVwTarefaEmpresa {
   t_descricao_resumo: string;
   t_descricao: string;
   t_erp: 'SOFTSHOP' | 'SOFTCOMSHOP' | 'TODOS';
+  t_param_descricao?: string | null;
   t_te_param_descricao?: string | null;
   t_param_ss: boolean;
   t_param_sh: boolean;
