@@ -67,25 +67,43 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
     } else if (tarefa.t_id === 6) {
       // Analise NFSe
 
-      const modeloIA = tarefa.t_param_01 || '';
-      const padraoNFSe = tarefa.te_param_01 || '';
-      const xmlRejeitado = tarefa.te_param_02 || '';
-      const xmlAutorizado = tarefa.te_param_03 || '';
-      const prompt = Servicos.OpenaiIA.promptAnaliseNFSe(modeloIA, xmlRejeitado, xmlAutorizado);
-      const result = await Servicos.OpenaiIA.gerarResposta(prompt);
-      console.log(result);
+      const modeloIA = Util.Texto.tratarComoString(tarefa.t_param_01) || '';
+      const limiteMaxTokens = Util.Texto.tratarComoNumero(tarefa.t_param_02) || 0;
+      const padraoNFSe = Util.Texto.tratarComoString(tarefa.te_param_01) || '';
+      const xmlRejeitado = Util.Texto.tratarComoString(tarefa.te_param_02) || '';
+      const xmlAutorizadoEspelho = Util.Texto.tratarComoString(tarefa.te_param_03) || '';
 
-      if (!result.sucesso) {
+      const prompt = Servicos.NFSe.promptAnaliseNFSe(modeloIA, xmlRejeitado, '', xmlAutorizadoEspelho || '');
+      const calcTokens = Servicos.OpenaiIA.calcularPromptTokens(prompt.messages);
+      console.log('calcTokens', calcTokens);
+
+      // Valida se ultrapassa o limite de token definido
+      if (calcTokens > limiteMaxTokens) {
         await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
           status: 'ERRO',
-          feedback: result.erro,
+          feedback: `Limite de tokens excedido para esta operação. | Máximo permitido: ${limiteMaxTokens} | Utilizado: ${calcTokens}`,
         });
-      } else {
-        await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
-          status: 'FINALIZADO',
-          feedback: result.dados,
-        });
+
+        return;
       }
+
+      const resultAgent = await Servicos.OpenaiIA.gerarResposta(prompt);
+
+      if (!resultAgent.sucesso) {
+        await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
+          status: 'ERRO',
+          feedback: resultAgent.erro,
+        });
+
+        return;
+      }
+
+      const resultValido = Servicos.NFSe.validarRespostaAgente(resultAgent.dados);
+
+      await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
+        status: 'FINALIZADO',
+        feedback: resultValido,
+      });
     } else {
       Util.Log.error(`${MODULO} | executarTarefa | Nenhuma execução definida para a tarefa: ${tarefa.t_nome}`);
 

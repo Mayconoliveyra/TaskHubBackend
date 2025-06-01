@@ -21,10 +21,11 @@ Ao final da análise, serão apresentados relatórios claros com as diferenças 
       param_mc: false,
       param_api_im: false,
       icone: 'https://storage.googleapis.com/tecnosh-img/softcom/taskhub/icone-analise-doc2.png',
-      param_descricao: `param_01 = Modelo de IA a ser utilizado;`,
-      param_01: 'mistralai/mistral-7b-instruct',
+      param_descricao: `param_01* = Modelo de IA a ser utilizado; param_02* = Limite máximo de tokens.`,
+      param_01: 'openai/gpt-4o-mini',
+      param_02: `9999`,
       modal: 'ANALISE_NFSE',
-      te_param_descricao: 'param_01 = Padrão do município; param_02 = XML rejeitado; param_03 = XML Autorizado;',
+      te_param_descricao: 'param_01* = Padrão do município; param_02* = XML rejeitado; param_03 = XML Autorizado;',
     })
     .then(() => {
       Util.Log.info(`# Inserido registro | Id: ${id} | tabela: ${ETableNames.tarefas}`);

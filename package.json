@@ -12,6 +12,7 @@
     "rollback": "ts-node ./node_modules/knex/bin/cli.js migrate:rollback --knexfile knexfile.ts"
   },
   "dependencies": {
+    "@dqbd/tiktoken": "^1.0.21",
     "axios": "1.8.4",
     "bcryptjs": "3.0.2",
     "cors": "2.8.5",
