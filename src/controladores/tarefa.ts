@@ -170,24 +170,23 @@ const solicitar = async (req: Request<{}, {}, IBodySolicitarProps>, res: Respons
     }
   }
 
-  const resultSolicitar = await Repositorios.TarefaEmpresa.solicitar(
-    tarefa_id === 6
-      ? {
-          empresa_id,
-          tarefa_id,
-          status: 'PENDENTE',
-          param_01,
-          param_02,
-          param_03,
-        }
-      : { empresa_id, tarefa_id, status: 'PENDENTE' },
-  );
-  if (resultSolicitar.sucesso) {
+  if (tarefa_id == 6) {
+    // Analise NFSe
+    await Repositorios.TarefaEmpresa.solicitar({
+      empresa_id,
+      tarefa_id,
+      status: 'PENDENTE',
+      param_01,
+      param_02,
+      param_03: param_03 || null,
+    });
+
     return res.status(StatusCodes.NO_CONTENT).send();
   } else {
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      errors: { default: resultSolicitar.erro },
-    });
+    // Outras
+    await Repositorios.TarefaEmpresa.solicitar({ empresa_id, tarefa_id, status: 'PENDENTE' });
+
+    return res.status(StatusCodes.NO_CONTENT).send();
   }
 };
 const cancelar = async (req: Request<{ tarefaId: string }>, res: Response) => {
@@ -235,6 +234,23 @@ const historico = async (req: Request<{}, {}, {}, IQueryProps>, res: Response) =
   });
 };
 
+const consultarPadroesNFSe = async (req: Request<{}, {}, {}, {}>, res: Response) => {
+  const result = await Repositorios.NFSe.consultar();
+
+  if (!result.sucesso) {
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      errors: { default: result.erro },
+    });
+  }
+
+  const totalPaginas = 1; // Fixo
+
+  return res.status(StatusCodes.OK).json({
+    dados: result.dados,
+    totalRegistros: result.total,
+    totalPaginas: totalPaginas,
+  });
+};
 export const Tarefa = {
   consultarValidacao,
   solicitarValidacao,
@@ -244,4 +260,5 @@ export const Tarefa = {
   solicitar,
   cancelar,
   historico,
+  consultarPadroesNFSe,
 };

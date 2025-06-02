@@ -53,7 +53,7 @@ const validarRespostaAgente = (resposta: unknown): string => {
   }
 };
 
-const promptAnaliseNFSe = (modelo: string, xml_rejeitado: string, xml_autorizado_modelo: string, xml_autorizado_espelho: string): ICreateChat => {
+const promptAnaliseNFSe = (modelo: string, xml_rejeitado: string, xml_autorizado_modelo: string, xml_autorizado_espelho?: string | null): ICreateChat => {
   const prompt: ICreateChatMessages[] = [
     // ———— Prompt principal ————
     {

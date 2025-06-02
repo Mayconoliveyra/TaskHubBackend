@@ -35,4 +35,6 @@ router.post('/tarefa/solicitar', Controladores.Tarefa.solicitarValidacao, Contro
 router.patch('/tarefa/cancelar/:tarefaId', Controladores.Tarefa.cancelarValidacao, Controladores.Tarefa.cancelar);
 router.get('/tarefa/historico', Controladores.Tarefa.historicoValidacao, Controladores.Tarefa.historico);
 
+router.get('/tarefa/nfse/padroes', Controladores.Tarefa.consultarPadroesNFSe);
+
 export { router };

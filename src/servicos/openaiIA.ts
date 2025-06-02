@@ -17,8 +17,9 @@ const gerarResposta = async (requisicao: ICreateChat): Promise<IRetorno<string>>
     });
 
     const completion = await openai.chat.completions.create(requisicao);
-
     const resposta = completion.choices[0]?.message?.content || '';
+
+    Util.Log.info(`${MODULO} | Prompt e retorno gerarResposta`, { requisicao: requisicao, create: completion, resposta: resposta });
 
     return {
       sucesso: true,

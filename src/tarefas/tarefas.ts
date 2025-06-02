@@ -66,22 +66,30 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
       }
     } else if (tarefa.t_id === 6) {
       // Analise NFSe
-
       const modeloIA = Util.Texto.tratarComoString(tarefa.t_param_01) || '';
       const limiteMaxTokens = Util.Texto.tratarComoNumero(tarefa.t_param_02) || 0;
-      const padraoNFSe = Util.Texto.tratarComoString(tarefa.te_param_01) || '';
+      const padraoNFSe = Util.Texto.tratarComoNumero(tarefa.te_param_01) || 0;
       const xmlRejeitado = Util.Texto.tratarComoString(tarefa.te_param_02) || '';
-      const xmlAutorizadoEspelho = Util.Texto.tratarComoString(tarefa.te_param_03) || '';
+      const xmlAutorizadoEspelho = Util.Texto.tratarComoString(tarefa.te_param_03) || null;
+      const xmlModelo = (await Repositorios.NFSe.consultarPrimeiroRegistro([{ coluna: 'id', operador: '=', valor: padraoNFSe }])).dados?.xml_modelo || null;
 
-      const prompt = Servicos.NFSe.promptAnaliseNFSe(modeloIA, xmlRejeitado, '', xmlAutorizadoEspelho || '');
+      if (!xmlAutorizadoEspelho && !xmlModelo) {
+        await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
+          status: 'ERRO',
+          feedback: `[{"id":"1","nomeTag":"Exemplo de XML Autorizado","tipo":"ausente","valor_encontrado":"VAZIO","valor_esperado":"XML ESPELHO","sugestao":"Nenhum exemplo de XML autorizado foi encontrado para o padrão do município selecionado. Para continuar a análise, selecione um arquivo autorizado no passo 3."}]`,
+        });
+
+        return;
+      }
+
+      const prompt = Servicos.NFSe.promptAnaliseNFSe(modeloIA, xmlRejeitado, xmlModelo || '', xmlAutorizadoEspelho);
       const calcTokens = Servicos.OpenaiIA.calcularPromptTokens(prompt.messages);
-      console.log('calcTokens', calcTokens);
 
       // Valida se ultrapassa o limite de token definido
       if (calcTokens > limiteMaxTokens) {
         await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
           status: 'ERRO',
-          feedback: `Limite de tokens excedido para esta operação. | Máximo permitido: ${limiteMaxTokens} | Utilizado: ${calcTokens}`,
+          feedback: `[{"id":"1","nomeTag":"Limite de Tokens","tipo":"formato inválido","valor_encontrado":"UTILIZADO: ${calcTokens}","valor_esperado":"MÁXIMO PERMITIDO: ${limiteMaxTokens}","sugestao":"O número de tokens excedeu o limite permitido. Reduza o tamanho do XML."}]`,
         });
 
         return;
@@ -92,7 +100,7 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
       if (!resultAgent.sucesso) {
         await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
           status: 'ERRO',
-          feedback: resultAgent.erro,
+          feedback: `[{"id":"1","nomeTag":"Erro Inesperado","tipo":"formato inválido","valor_encontrado":"${resultAgent.erro}","valor_esperado":"PROCESSAMENTO BEM-SUCEDIDO","sugestao":"Ocorreu um erro inesperado durante a análise. Revise os dados de entrada e tente novamente."}]`,
         });
 
         return;
