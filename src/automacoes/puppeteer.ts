@@ -6,6 +6,9 @@ import puppeteer, { Page, Browser } from 'puppeteer';
 
 import { Util } from '../util';
 
+// Diretório browser
+const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
+
 // Nome do provedor para logs
 const PROVIDER_NAME = 'automations.puppeteer';
 
@@ -51,20 +54,26 @@ const copiarDirIgnorandoEmUso = (source: string, destination: string): void => {
 // Configurações padrão
 const DEFAULTS = {
   headless: false,
-  slowMo: 0,
+  slowMo: 15,
   timeout: 1000 * 60 * 1, // 1 minuto
-  userDataDir: 'C:/Dev/HomerBot/browser/user_data',
-  executablePath: 'C:/Dev/HomerBot/browser/chrome_win/chrome.exe',
-  extensionPath: 'C:/Dev/HomerBot/browser/2captcha',
+  vwWidth: 1440, // Define a largura
+  vwHeight: 900, // Define a altura
+  userDataDir: path.join(PROJECT_ROOT, 'browser', 'user_data'),
+  executablePath: path.join(PROJECT_ROOT, 'browser', 'chrome_win', 'chrome.exe'),
+  extensionPath: path.join(PROJECT_ROOT, 'browser', '2captcha'),
 };
 
 // Cria uma instância do Puppeteer com configurações personalizadas
 const pagina = async ({
   headless = DEFAULTS.headless,
   slowMo = DEFAULTS.slowMo,
+  vwWidth = DEFAULTS.vwWidth,
+  vwHeight = DEFAULTS.vwHeight,
 }: {
   headless?: boolean;
   slowMo?: number;
+  vwWidth?: number;
+  vwHeight?: number;
 }): Promise<{ page: Page; browser: Browser }> => {
   try {
     // Cria o diretório temporário dentro de _homer-bot
@@ -79,7 +88,18 @@ const pagina = async ({
       slowMo,
       executablePath: DEFAULTS.executablePath,
       userDataDir: tempUserDataDir,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', `--load-extension=${DEFAULTS.extensionPath}`, `--disable-extensions-except=${DEFAULTS.extensionPath}`],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        `--load-extension=${DEFAULTS.extensionPath}`,
+        `--disable-extensions-except=${DEFAULTS.extensionPath}`,
+        `--window-size=${vwWidth},${vwHeight}`,
+      ],
+
+      defaultViewport: {
+        width: vwWidth,
+        height: vwHeight,
+      },
     });
 
     // Abre uma nova aba específica
@@ -95,58 +115,110 @@ const pagina = async ({
         rmSync(tempUserDataDir, { recursive: true, force: true });
         /* Util.Log.info(`${PROVIDER_NAME}\nDiretório temporário removido: ${userDataDir}`); */
       } catch (err: any) {
-        Util.Log.error(`${PROVIDER_NAME}\nErro ao remover diretório temporário: ${err.message}`);
+        Util.Log.error(`${PROVIDER_NAME}\nErro ao remover diretório temporário: ${err.message}`, err);
       }
     });
 
     return { browser, page };
   } catch (error: any) {
-    Util.Log.error(`${PROVIDER_NAME}\nErro ao inicializar Puppeteer: ${error.message}`);
+    Util.Log.error(`${PROVIDER_NAME}\nErro ao inicializar Puppeteer: ${error.message}`, error);
     throw new Error('Falha ao criar instância do Puppeteer');
   }
 };
 
 // Pausa a execução por um período
-const aguardar = (ms = 3000): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+const aguardar = (ms = 3000): Promise<void> => {
+  Util.Log.info(`${PROVIDER_NAME} | Aguardando por ${ms}ms...`);
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
 
 // Extrai o próximo valor após o valor atual em uma mensagem
 const extrairValorSeguinte = (message: string, currentValue: string): string | null => {
-  const parts = message.trim().split(/\s+/);
-  const index = parts.indexOf(currentValue);
-  return index !== -1 && index + 1 < parts.length ? parts[index + 1] : null;
+  try {
+    // 1. Remove espaços das extremidades e divide a frase por qualquer quantidade de espaços
+    const parts = message.trim().split(/\s+/);
+
+    // 2. Procura a posição da palavra de referência
+    const index = parts.indexOf(currentValue);
+
+    // 3. Se encontrou e existe algo após ela, devolve esse “próximo” valor
+    if (index !== -1 && index + 1 < parts.length) {
+      const nextValue = parts[index + 1];
+      Util.Log.debug(`${PROVIDER_NAME} | Valor seguinte encontrado: ${nextValue} (após "${currentValue}")`);
+      return nextValue;
+    }
+
+    // 4. Caso não exista sucessor ou a palavra não seja encontrada, registra e devolve null
+    Util.Log.info(`${PROVIDER_NAME} | Valor "${currentValue}" não encontrado ou sem sucessor em: "${message}"`);
+    return null;
+  } catch (error: any) {
+    // 5. Captura qualquer exceção inesperada e devolve null
+    Util.Log.error(`${PROVIDER_NAME} | Erro ao extrair valor seguinte a "${currentValue}" | ${error.message}`, error);
+    return null;
+  }
 };
 
 // Extrai o valor de uma chave específica em uma mensagem formatada
-const extrairValorPorChave = (message: string, key: string) => {
-  const lines = message.split('\n'); // Divide o conteúdo em linhas
-  for (const line of lines) {
-    const trimmedLine = line.trim(); // Remove espaços em branco no início e no final da linha
-    if (trimmedLine.startsWith(key)) {
-      const parts = trimmedLine.split(':');
-      return parts[1]?.trim() || null; // Retorna o valor após o ":", removendo espaços extras
+const extrairValorPorChave = (message: string, key: string): string | null => {
+  try {
+    // 1. Quebra o texto por quebras de linha (compatível \n ou \r\n)
+    const lines = message.split(/\r?\n/);
+
+    // 2. Percorre cada linha em busca da chave indicada
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+
+      // A comparação considera a chave seguida de ":" ou da própria chave
+      if (
+        trimmedLine.startsWith(`${key}:`) ||
+        trimmedLine.startsWith(`${key} :`) || // espaço antes dos dois-pontos
+        trimmedLine === key // linha que contenha somente a chave
+      ) {
+        const parts = trimmedLine.split(':');
+
+        // Se existir informação após ":", retorna o valor já sem espaços
+        const valor = parts[1]?.trim() || null;
+
+        Util.Log.debug(`${PROVIDER_NAME} | Valor encontrado para chave "${key}": ${valor}`);
+        return valor;
+      }
     }
+
+    // 3. Caso nenhuma linha corresponda, apenas registra e devolve null
+    Util.Log.info(`${PROVIDER_NAME} | Chave "${key}" não encontrada em mensagem.`);
+    return null;
+  } catch (error: any) {
+    // 4. Captura erros inesperados e evita quebra do fluxo
+    Util.Log.error(`${PROVIDER_NAME} | Erro ao extrair valor da chave "${key}" | ${error.message}`, error);
+    return null;
   }
-  return null; // Retorna null se a chave não for encontrada
 };
 
 // Aguarda e captura o primeiro seletor disponível
 const capturarPrimeiroSeletor = async (page: Page, selectors: string[], timeout: number = DEFAULTS.timeout): Promise<string | null> => {
   try {
+    Util.Log.info(`${PROVIDER_NAME} | Aguardando por um dos seletores: ${selectors.join(', ')}`);
+
     const element = await page.waitForFunction((...selectors) => selectors.map((s) => document.querySelector(s)).find(Boolean), { timeout }, ...selectors);
 
-    if (!element) return null;
+    if (!element) {
+      Util.Log.warn(`${PROVIDER_NAME} | Nenhum seletor encontrado: ${selectors.join(', ')}`);
+      return null;
+    }
 
-    return await page.evaluate((el, selectors) => selectors.find((s) => el?.matches(s)) || null, element, selectors);
+    const seletorEncontrado = await page.evaluate((el, selectors) => selectors.find((s) => el?.matches(s)) || null, element, selectors);
+
+    Util.Log.info(`${PROVIDER_NAME} | Seletor identificado: ${seletorEncontrado}`);
+    return seletorEncontrado;
   } catch (error: any) {
     if (error.name === 'TimeoutError') {
       Util.Log.error(`${PROVIDER_NAME} | Timeout ao capturar seletores: ${selectors.join(', ')}`);
     } else {
-      Util.Log.error(`${PROVIDER_NAME} | Erro ao capturar seletor: ${error.message}`);
+      Util.Log.error(`${PROVIDER_NAME} | Erro ao capturar seletor: ${error.message}`, error);
     }
     return null;
   }
 };
-
 // Monitora seletor na página e executa callback ao encontrá-lo
 const monitorarSeletor = (
   page: Page,
@@ -158,9 +230,11 @@ const monitorarSeletor = (
   let isMonitoring = true;
   let isSelectorFound = false;
 
+  Util.Log.info(`${PROVIDER_NAME} | Iniciando monitoramento do seletor: ${selector}`);
+
   const stopMonitoring = () => {
     isMonitoring = false;
-    Util.Log.info(`${PROVIDER_NAME} | Monitoramento encerrado.`);
+    Util.Log.info(`${PROVIDER_NAME} | Monitoramento encerrado para o seletor: ${selector}`);
   };
 
   const checkSelector = async () => {
@@ -168,18 +242,27 @@ const monitorarSeletor = (
 
     try {
       const element = await page.$(selector);
+
       if (element && !isSelectorFound) {
+        Util.Log.info(`${PROVIDER_NAME} | Seletor encontrado: ${selector}`);
         isSelectorFound = true;
+
         await callback();
-        if (!continueMonitoringAfterDisappear) stopMonitoring();
+        Util.Log.info(`${PROVIDER_NAME} | Callback executado com sucesso.`);
+
+        if (!continueMonitoringAfterDisappear) {
+          Util.Log.info(`${PROVIDER_NAME} | Parando monitoramento após detecção do seletor.`);
+          stopMonitoring();
+        }
       } else if (!element && isSelectorFound && continueMonitoringAfterDisappear) {
+        Util.Log.info(`${PROVIDER_NAME} | Seletor desapareceu: ${selector} — pronto para detectar novamente.`);
         isSelectorFound = false;
       }
     } catch (error: any) {
       if (error.message.includes('Execution context was destroyed')) {
-        Util.Log.warn(`${PROVIDER_NAME} | Contexto destruído, reiniciando monitoramento.`);
+        Util.Log.warn(`${PROVIDER_NAME} | Contexto destruído durante monitoramento. Tentando continuar...`);
       } else {
-        Util.Log.error(`${PROVIDER_NAME} | Erro ao monitorar seletor: ${error.message}`);
+        Util.Log.error(`${PROVIDER_NAME} | Erro ao monitorar seletor: ${selector} | ${error.message}`, error);
       }
     }
   };
@@ -195,7 +278,7 @@ const aguardarEClicar = async (page: Page, selector: string, timeout: number = D
     Util.Log.info(`${PROVIDER_NAME} | Clique realizado com sucesso no seletor: ${selector}`);
     return true;
   } catch (error: any) {
-    Util.Log.error(`${PROVIDER_NAME} | Erro ao clicar no seletor: ${selector} | ${error.message}`);
+    Util.Log.error(`${PROVIDER_NAME} | Erro ao clicar no seletor: ${selector} | ${error.message}`, error);
     return false;
   }
 };
@@ -208,12 +291,44 @@ const aguardarEDigitar = async (page: Page, selector: string, text: string, time
     Util.Log.info(`${PROVIDER_NAME} | Texto digitado com sucesso no seletor: ${selector}`);
     return true;
   } catch (error: any) {
-    Util.Log.error(`${PROVIDER_NAME} | Erro ao digitar no seletor: ${selector} | ${error.message}`);
+    Util.Log.error(`${PROVIDER_NAME} | Erro ao digitar no seletor: ${selector} | ${error.message}`, error);
     return false;
   }
 };
 
-// Exporta funções reutilizáveis
+const verificarResultadoSQL = async (page: Page, timeout: number = DEFAULTS.timeout): Promise<{ sucesso: boolean; erro: string | null }> => {
+  Util.Log.info(`${PROVIDER_NAME} | Verificando resultado da execução SQL...`);
+
+  const seletor = await capturarPrimeiroSeletor(page, ['.alert-danger', '.alert-success'], timeout);
+
+  if (!seletor) {
+    Util.Log.warn(`${PROVIDER_NAME} | Nenhum resultado visível após o tempo limite.`);
+    return {
+      sucesso: false,
+      erro: 'Nenhum resultado encontrado após o tempo limite.',
+    };
+  }
+
+  if (seletor === '.alert-danger') {
+    Util.Log.warn(`${PROVIDER_NAME} | Resultado da execução retornou erro.`);
+    const erroMsg = await page.$$eval(`${seletor} code`, (codes) => {
+      const ultimo = codes[codes.length - 1];
+      return ultimo?.textContent?.trim() || 'Erro desconhecido.';
+    });
+
+    Util.Log.error(`${PROVIDER_NAME} | Mensagem de erro capturada: ${erroMsg}`);
+    return { sucesso: false, erro: erroMsg };
+  }
+
+  if (seletor === '.alert-success') {
+    Util.Log.info(`${PROVIDER_NAME} | Execução SQL realizada com sucesso.`);
+    return { sucesso: true, erro: null };
+  }
+
+  Util.Log.error(`${PROVIDER_NAME} | Seletor não reconhecido: ${seletor}`);
+  return { sucesso: false, erro: 'Seletor não reconhecido.' };
+};
+
 export const Puppeteer = {
   pagina,
   aguardar,
@@ -223,4 +338,5 @@ export const Puppeteer = {
   monitorarSeletor,
   aguardarEClicar,
   aguardarEDigitar,
+  verificarResultadoSQL,
 };

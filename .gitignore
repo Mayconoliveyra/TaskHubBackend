@@ -4,6 +4,7 @@
 /coverage
 /dist
 /log
+/browser
 
 .env
 google-cloud.json
