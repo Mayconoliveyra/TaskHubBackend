@@ -16,23 +16,23 @@ export async function up(knex: Knex) {
        * Parâmetros adicionais para customizações específicas.
        * Exemplo: versão, modelo, token específico, entre outros.
        */
-      table.text('param_01').nullable();
-      table.text('param_02').nullable();
-      table.text('param_03').nullable();
-      table.text('param_04').nullable();
-      table.text('param_05').nullable();
-      table.text('param_06').nullable();
-      table.text('param_07').nullable();
-      table.text('param_08').nullable();
-      table.text('param_09').nullable();
-      table.text('param_10').nullable();
-      table.text('param_11').nullable();
-      table.text('param_12').nullable();
-      table.text('param_13').nullable();
-      table.text('param_14').nullable();
-      table.text('param_15').nullable();
+      table.text('param_01', 'longtext').nullable();
+      table.text('param_02', 'longtext').nullable();
+      table.text('param_03', 'longtext').nullable();
+      table.text('param_04', 'longtext').nullable();
+      table.text('param_05', 'longtext').nullable();
+      table.text('param_06', 'longtext').nullable();
+      table.text('param_07', 'longtext').nullable();
+      table.text('param_08', 'longtext').nullable();
+      table.text('param_09', 'longtext').nullable();
+      table.text('param_10', 'longtext').nullable();
+      table.text('param_11', 'longtext').nullable();
+      table.text('param_12', 'longtext').nullable();
+      table.text('param_13', 'longtext').nullable();
+      table.text('param_14', 'longtext').nullable();
+      table.text('param_15', 'longtext').nullable();
 
-      table.text('feedback').nullable();
+      table.text('feedback', 'longtext').nullable();
 
       table.enum('status', ['PENDENTE', 'PROCESSANDO', 'FINALIZADO', 'CONSULTAR', 'CANCELADA', 'ERRO']).notNullable().defaultTo('PENDENTE'); // Status da tarefa
 

@@ -19,6 +19,7 @@
     "discord.js-selfbot-v13": "3.4.0",
     "dotenv": "16.3.1",
     "express": "4.19.2",
+    "fast-xml-parser": "^5.2.4",
     "fs-extra": "11.2.0",
     "http-status-codes": "2.2.0",
     "jsonwebtoken": "8.5.1",

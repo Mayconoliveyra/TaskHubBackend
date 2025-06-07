@@ -6,6 +6,8 @@ import { Middlewares } from '../middlewares';
 
 import { Repositorios } from '../repositorios';
 
+import { Servicos } from '../servicos';
+
 interface IQueryProps {
   empresaId?: number;
   pagina?: number;
@@ -171,14 +173,34 @@ const solicitar = async (req: Request<{}, {}, IBodySolicitarProps>, res: Respons
   }
 
   if (tarefa_id == 6) {
+    const param02 = Servicos.NFSe.removerTagsXml(param_02 || '', ['Signature']);
+    const param03 = param_03 ? Servicos.NFSe.removerTagsXml(param_03, ['Signature']) : null;
+
+    if (param02 && param02.length > 9999) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        errors: {
+          default: 'Não foi possível processar a solicitação. O arquivo rejeitado está muito grande. Por favor, reduza o tamanho do arquivo e tente novamente.',
+        },
+      });
+    }
+
+    if (param03 && param03.length > 9999) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        errors: {
+          default:
+            'Não foi possível processar a solicitação. O arquivo autorizado está muito grande. Por favor, reduza o tamanho do arquivo e tente novamente.',
+        },
+      });
+    }
+
     // Analise NFSe
     await Repositorios.TarefaEmpresa.solicitar({
       empresa_id,
       tarefa_id,
       status: 'PENDENTE',
-      param_01,
-      param_02,
-      param_03: param_03 || null,
+      param_01, // ID Padrão do município
+      param_02: param02, // XML rejeitado
+      param_03: param03, //XML Autorizado Espelho,
     });
 
     return res.status(StatusCodes.NO_CONTENT).send();

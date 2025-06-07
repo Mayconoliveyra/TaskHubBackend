@@ -12,6 +12,7 @@ export async function up(knex: Knex) {
       table.string('nome', 255).notNullable().unique();
       table.text('observacao');
       table.text('xml_modelo');
+      table.string('xml_modelo_empresa', 255);
       table.bigInteger('ativo').notNullable().defaultTo(1);
 
       table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
