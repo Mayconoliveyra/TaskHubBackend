@@ -101,6 +101,7 @@ const promptAnaliseNFSe = (
   xml_rejeitado: string,
   xml_autorizado_modelo: string,
   xml_modelo_empresa?: string | null,
+  observacao?: string | null,
   xml_autorizado_espelho?: string | null,
 ): ICreateChat => {
   const promptModelo = `
@@ -186,7 +187,7 @@ O array de saída **DEVE SEMPRE** começar com um objeto informativo fixo com 'i
   'tipo': 'informativo',
   'valor_encontrado': 'informativo',
   'valor_esperado': 'informativo',
-  'sugestao': "Para comparação utilizamos a empresa: <b><i>${xml_modelo_empresa}</i></b>"
+  'sugestao': "\n<b>Empresa modelo:</b> <i>${xml_modelo_empresa}</i>${observacao ? `\n<b>Instruções de homologação:</b> <i>${observacao}</i>` : ''} "
   }
 
 ### 2. Lógica de Retorno
@@ -252,7 +253,7 @@ A sua principal diretriz é **identificar os conceitos fiscais no XML, mesmo que
 A análise deve focar nos seguintes conceitos, procurando por qualquer uma das variações de nome de tag listadas como exemplo.
 - **Inscrição Municipal:** 'Prestador/IM', 'InscricaoMunicipal', 'IM', e similares.
 - **Item da Lista de Serviço:** 'IteListServico', 'ItemListaServico', 'CodigoTributacaoMunicipio', e similares.
-- **Município de Incidência:** 'cMunIncidencia', 'CodigoMunicipioIncidencia', e similares.
+- **Município de Incidência:** 'cMunIncidencia', 'CodigoMunicipioIncidencia' **(ATENÇÃO: A tag fiscal principal, não confundir com códigos de endereço).**
 - **CNAE:** 'Cnae', 'CodigoCnae', 'ItemCnae', e similares.
 - **Natureza da Operação:** 'natOp', 'NaturezaOperacao', e similares.
 - **Simples Nacional:** 'OptSN', 'OptanteSimplesNacional', e similares.
@@ -266,7 +267,7 @@ A análise deve focar nos seguintes conceitos, procurando por qualquer uma das v
 #### 2.2. Regras Especiais Detalhadas
 Para os conceitos abaixo, aplique estas validações de formato, mesmo em modo 'modelo'.
 - **Regra Especial para Inscrição Municipal:** Procure pela tag que representa a **Inscrição Municipal do Prestador**. O nome e a hierarquia desta tag podem variar (ex: 'Prestador/IM', 'InfPrestador/InscricaoMunicipal', 'IM'). Uma vez identificada, verifique seu valor. Se o valor for uma sequência numérica simples e com baixa probabilidade de ser real (ex: '123', '1234', '11111', '99999'), gere uma inconsistência do tipo 'formato inválido' com a sugestão 'Verificar se a Inscrição Municipal do prestador está preenchida corretamente.'.
-- **Regra Especial para 'cMunIncidencia':** Procure pela tag que representa o **Código do Município de Incidência do ISS** (ex: 'cMunIncidencia', 'CodigoMunicipioIncidencia'). Verifique se o valor é um código numérico válido. Se o valor contiver letras, for um placeholder óbvio (ex: '9999999', '0'), ou tiver um número de dígitos inconsistente com o padrão IBGE (geralmente 7 dígitos), classifique como 'formato inválido' e sugira: 'Verificar se o Código do Município de Incidência está correto e no formato esperado.'.
+- **Regra Especial para 'cMunIncidencia':** Procure pela tag que representa o **Código do Município de Incidência do ISS** (ex: 'cMunIncidencia', 'CodigoMunicipioIncidencia'). Verifique se o valor é um código numérico válido. Se o valor contiver letras, for um placeholder óbvio (ex: '9999999', '0'), ou tiver um número de dígitos inconsistente com o padrão IBGE (geralmente 7 dígitos), classifique como 'formato inválido' e sugira: 'Verificar se o Código do Município de Incidência está correto e no formato esperado.'. **Importante: Esta regra aplica-se apenas à tag de incidência fiscal, não a outras tags genéricas como 'CodigoMunicipio' de endereços.**
 - **Regra Especial para 'Cnae':** Localize a tag do **Código CNAE** (ex: 'Cnae', 'CodigoCnae', 'ItemCnae'). Analise o valor. Se não for um código puramente numérico ou se for um placeholder (ex: '9999999', '0'), classifique como 'formato inválido' com a sugestão: 'Conferir se o Código CNAE está preenchido corretamente e de acordo com a atividade de serviço.'.
 - **Regra Especial para 'IteListServico':** Localize a tag do **Item da Lista de Serviço** (ex: 'IteListServico', 'ItemListaServico', 'CodigoTributacaoMunicipio'). Esta tag é crítica para o formato. Compare o **padrão de formatação** do valor no 'xml_rejeitado' com o padrão no 'xml_autorizado_modelo'. Por exemplo, se o modelo usa um ponto como separador (ex: '14.05') e o XML rejeitado não usa (ex: '1405'), ou vice-versa, isso é uma inconsistência de formato. Classifique como 'formato inválido' e sugira: 'O formato do Item da Lista de Serviço parece inconsistente. Verificar se a formatação está correta.'.
 
@@ -432,7 +433,7 @@ A sua análise de comparação de valores deve se concentrar **EXCLUSIVAMENTE** 
 
 #### Município de Incidência
 * **Nomes Comuns:** 'cMunIncidencia', 'CodigoMunicipioIncidencia', e similares.
-* **Regra de Análise:** Verifique se o valor contém letras ou é um placeholder óbvio. Se for, classifique como 'formato inválido'.
+* **Regra de Análise:** Verifique se o valor contém letras ou é um placeholder óbvio. Se for, classifique como 'formato inválido'. **Importante: Esta regra aplica-se apenas à tag de incidência fiscal, não a outras tags genéricas como 'CodigoMunicipio' de endereços.**.
 
 #### CNAE
 * **Nomes Comuns:** 'Cnae', 'CodigoCnae', 'ItemCnae', e similares.

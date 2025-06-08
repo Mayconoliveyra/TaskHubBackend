@@ -75,6 +75,7 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
       const registroTarEmp = await Repositorios.NFSe.consultarPrimeiroRegistro([{ coluna: 'id', operador: '=', valor: idPadraoNFSe }]);
       const xmlModelo = registroTarEmp.dados?.xml_modelo || '';
       const xmlModeloEmpresa = registroTarEmp.dados?.xml_modelo_empresa || '';
+      const xmlModeloObservacao = registroTarEmp.dados?.observacao || '';
 
       if (!xmlAutorizadoEspelho && !xmlModelo) {
         await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
@@ -85,7 +86,7 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
         return;
       }
 
-      const prompt = Servicos.NFSe.promptAnaliseNFSe(modeloIA, xmlRejeitado, xmlModelo, xmlModeloEmpresa, xmlAutorizadoEspelho);
+      const prompt = Servicos.NFSe.promptAnaliseNFSe(modeloIA, xmlRejeitado, xmlModelo, xmlModeloEmpresa, xmlModeloObservacao, xmlAutorizadoEspelho);
       const calcTokens = Servicos.OpenaiIA.calcularPromptTokens(prompt.messages);
 
       // Valida se ultrapassa o limite de token definido
