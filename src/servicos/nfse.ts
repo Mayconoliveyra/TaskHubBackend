@@ -60,19 +60,37 @@ const removerTagsXml = (xmlString: string, tagsParaRemover: string[]): string =>
 };
 const validarRespostaAgente = (resposta: unknown): string => {
   try {
-    // Se a resposta for uma string JSON, tenta fazer o parse
+    // Tenta fazer o parse se for string
     if (typeof resposta === 'string') {
       try {
         resposta = JSON.parse(resposta);
       } catch (e) {
-        Util.Log.error(`${MODULO} | Falha ao fazer parse da string JSON`, resposta);
-        return '[]';
+        Util.Log.error(`${MODULO}.validarRespostaAgente | Falha ao fazer parse da string JSON`, resposta);
+        return JSON.stringify([
+          {
+            id: '1',
+            nomeTag: 'Erro Inesperado',
+            tipo: 'formato inválido',
+            valor_encontrado: 'VAZIO',
+            valor_esperado: 'VAZIO',
+            sugestao: 'Ocorreu um erro inesperado durante a análise. Revise os dados de entrada e tente novamente.',
+          },
+        ]);
       }
     }
 
     if (!Array.isArray(resposta)) {
-      Util.Log.error(`${MODULO} | A resposta não é um array.`, resposta);
-      return '[]';
+      Util.Log.error(`${MODULO}.validarRespostaAgente | A resposta não é um array.`, resposta);
+      return JSON.stringify([
+        {
+          id: '1',
+          nomeTag: 'Erro Inesperado',
+          tipo: 'formato inválido',
+          valor_encontrado: 'VAZIO',
+          valor_esperado: 'VAZIO',
+          sugestao: 'Ocorreu um erro inesperado durante a análise. Revise os dados de entrada e tente novamente.',
+        },
+      ]);
     }
 
     const resultadoValido = resposta.filter((item): item is ResultadoValidacao => {
@@ -91,9 +109,18 @@ const validarRespostaAgente = (resposta: unknown): string => {
     });
 
     return JSON.stringify(resultadoValido);
-  } catch (error) {
-    Util.Log.error(`${MODULO} | Erro ao validar resposta do agente`, error);
-    return '[]';
+  } catch (error: any) {
+    Util.Log.error(`${MODULO}.validarRespostaAgente | Erro ao validar resposta do agente`, error);
+    return JSON.stringify([
+      {
+        id: '1',
+        nomeTag: 'Erro Inesperado',
+        tipo: 'formato inválido',
+        valor_encontrado: 'VAZIO',
+        valor_esperado: 'VAZIO',
+        sugestao: 'Ocorreu um erro inesperado durante a análise. Revise os dados de entrada e tente novamente.',
+      },
+    ]);
   }
 };
 const promptAnaliseNFSe = (
