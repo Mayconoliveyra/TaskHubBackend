@@ -1,6 +1,8 @@
 import { Util } from '../util';
+import { Log } from '../util/log';
 import { IRetorno } from '../util/tipagens';
 
+import { Servicos } from '.';
 import { Axios } from './axios';
 import { IApiIMErroValidacao, IApiIMAutenticar, IApiIMGetMarketplaces, IApiIMGetProdutos, IApiIMGetCategorias } from './types/apiMarketplace';
 
@@ -347,6 +349,97 @@ const zerarIntegracao = async (empresaId: number): Promise<IRetorno<string>> => 
   }
 };
 
+const forcaEstoqueDisponibilidade = async (empresaId: number): Promise<IRetorno<string>> => {
+  try {
+    const resGetProdutos = await getProdutos(empresaId);
+
+    if (!resGetProdutos.sucesso) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: resGetProdutos.erro,
+        total: 1,
+      };
+    }
+
+    if (resGetProdutos.dados.length === 0) {
+      return {
+        sucesso: true,
+        dados: 'Não foi encontrado nenhum produto na API MARKETPLACE.',
+        erro: null,
+        total: 1,
+      };
+    }
+
+    const obsAtEstoque = resGetProdutos.dados
+      .filter((item) => item.grid === false)
+      .map((item) => ({
+        id: item.id,
+        stock: item.stock.stock || 0,
+      }));
+
+    const resAtEstoqueProdPrincipal = await Servicos.MeuCarrinho.atEstoque(empresaId, obsAtEstoque);
+    if (!resAtEstoqueProdPrincipal.sucesso) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: resAtEstoqueProdPrincipal.erro,
+        total: 1,
+      };
+    }
+
+    // Aguarda 15s por garantia
+    await Util.Outros.delay(15000);
+
+    for (const p of resGetProdutos.dados) {
+      if (p.grid) continue;
+
+      const externalCode = p.merchantMarketplaces.find((item) => item.marketplaceName == 'MeuCarrinho')?.externalCode;
+      const controleEstoque = p.stock.active;
+      const estoqueAtual = p.stock.stock;
+      const disponibilidade = p.availability == 'AVAILABLE' ? true : false;
+
+      // Define o novo status de disponibilidade do produto com base em regras de estoque e configuração
+      const novoStatus: 'UNAVAILABLE' | 'AVAILABLE' = !disponibilidade
+        ? 'UNAVAILABLE' // Se o produto estiver marcado como indisponível, retorna 'UNAVAILABLE'
+        : !controleEstoque
+        ? 'AVAILABLE' // Se o controle de estoque estiver desativado, o produto sempre estará disponível
+        : estoqueAtual > 0
+        ? 'AVAILABLE' // Se o estoque estiver sendo controlado e houver quantidade disponível, está disponível
+        : 'UNAVAILABLE'; // Caso contrário, está indisponível
+
+      if (!externalCode) {
+        continue;
+      }
+
+      const resAtDisponibilidadeProduto = await Servicos.MeuCarrinho.atDisponibilidadeProduto(empresaId, externalCode, novoStatus);
+      if (!resAtDisponibilidadeProduto.sucesso) {
+        return {
+          sucesso: false,
+          dados: null,
+          erro: resAtDisponibilidadeProduto.erro,
+          total: 1,
+        };
+      }
+    }
+
+    return {
+      sucesso: true,
+      dados: 'Atualização concluída! Estoque e disponibilidade foram ajustados com sucesso.',
+      erro: null,
+      total: 1,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao realizar atualização de estoque e disponibilidade.`, error);
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 1,
+    };
+  }
+};
+
 export const ApiMarketplace = {
   autenticar,
   getMarketplaces,
@@ -355,4 +448,5 @@ export const ApiMarketplace = {
   deleteProdutoPorId,
   deleteCategoriaPorId,
   zerarIntegracao,
+  forcaEstoqueDisponibilidade,
 };
