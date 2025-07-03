@@ -372,11 +372,14 @@ const forcaEstoqueDisponibilidade = async (empresaId: number): Promise<IRetorno<
     }
 
     const obsAtEstoque = resGetProdutos.dados
-      .filter((item) => item.grid === false)
-      .map((item) => ({
-        id: item.id,
-        stock: item.stock.stock || 0,
-      }));
+      .filter((item) => item.grid == false && item.merchantMarketplaces.some((mp) => mp.marketplaceName == 'MeuCarrinho' && mp.externalCode != null))
+      .map((item) => {
+        const marketplace = item.merchantMarketplaces.find((mp) => mp.marketplaceName == 'MeuCarrinho');
+        return {
+          id: marketplace!.externalCode, // O "!" porque já garantimos que não é null
+          stock: item.stock.stock || 0,
+        };
+      });
 
     const resAtEstoqueProdPrincipal = await Servicos.MeuCarrinho.atEstoque(empresaId, obsAtEstoque);
     if (!resAtEstoqueProdPrincipal.sucesso) {
