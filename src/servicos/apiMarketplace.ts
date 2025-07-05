@@ -1,10 +1,18 @@
+import { Repositorios } from '../repositorios';
+
 import { Util } from '../util';
-import { Log } from '../util/log';
 import { IRetorno } from '../util/tipagens';
 
 import { Servicos } from '.';
 import { Axios } from './axios';
-import { IApiIMErroValidacao, IApiIMAutenticar, IApiIMGetMarketplaces, IApiIMGetProdutos, IApiIMGetCategorias } from './types/apiMarketplace';
+import {
+  IApiIMErroValidacao,
+  IApiIMAutenticar,
+  IApiIMGetMarketplaces,
+  IApiIMGetProdutos,
+  IApiIMGetCategorias,
+  IApiIMProdutoBaseForcaEstDisp,
+} from './types/apiMarketplace';
 
 const BASE_URL_API_IMK = 'https://api-imkt.softcomservices.com';
 
@@ -349,20 +357,38 @@ const zerarIntegracao = async (empresaId: number): Promise<IRetorno<string>> => 
   }
 };
 
-const forcaEstoqueDisponibilidade = async (empresaId: number): Promise<IRetorno<string>> => {
-  try {
-    const resGetProdutos = await getProdutos(empresaId);
+const forcaEstoqueDisponibilidade = async (empresaId: number, merchantId: string): Promise<IRetorno<string>> => {
+  function calcularDisponibilidade(
+    disponibilidadeOriginal: string | null | undefined,
+    controleEstoque: boolean | null | undefined,
+    estoqueAtual: number | null | undefined,
+  ): 'AVAILABLE' | 'UNAVAILABLE' {
+    const disponibilidade = disponibilidadeOriginal === 'AVAILABLE';
+    const controle = controleEstoque ?? false;
+    const estoque = estoqueAtual ?? 0;
 
-    if (!resGetProdutos.sucesso) {
+    if (!disponibilidade) return 'UNAVAILABLE';
+    if (!controle) return 'AVAILABLE';
+    return estoque > 0 ? 'AVAILABLE' : 'UNAVAILABLE';
+  }
+
+  try {
+    const arrayProdutoSimples: IApiIMProdutoBaseForcaEstDisp[] = [];
+    const arrayProdutoGrade: IApiIMProdutoBaseForcaEstDisp[] = [];
+    const arrayProdutoGradeItem: IApiIMProdutoBaseForcaEstDisp[] = [];
+
+    const [resGetProdutosIM, resGetProdutosMC] = await Promise.all([getProdutos(empresaId), Servicos.MeuCarrinho.alimentarProdutos(empresaId, merchantId)]);
+
+    if (!resGetProdutosIM.sucesso) {
       return {
         sucesso: false,
         dados: null,
-        erro: resGetProdutos.erro,
+        erro: resGetProdutosIM.erro,
         total: 1,
       };
     }
 
-    if (resGetProdutos.dados.length === 0) {
+    if (resGetProdutosIM.dados.length === 0) {
       return {
         sucesso: true,
         dados: 'Não foi encontrado nenhum produto na API MARKETPLACE.',
@@ -371,58 +397,161 @@ const forcaEstoqueDisponibilidade = async (empresaId: number): Promise<IRetorno<
       };
     }
 
-    const obsAtEstoque = resGetProdutos.dados
-      .filter((item) => item.grid == false && item.merchantMarketplaces.some((mp) => mp.marketplaceName == 'MeuCarrinho' && mp.externalCode != null))
-      .map((item) => {
-        const marketplace = item.merchantMarketplaces.find((mp) => mp.marketplaceName == 'MeuCarrinho');
-        return {
-          id: marketplace!.externalCode, // O "!" porque já garantimos que não é null
-          stock: item.stock.stock || 0,
-        };
-      });
-
-    const resAtEstoqueProdPrincipal = await Servicos.MeuCarrinho.atEstoque(empresaId, obsAtEstoque);
-    if (!resAtEstoqueProdPrincipal.sucesso) {
+    if (!resGetProdutosMC.sucesso) {
       return {
         sucesso: false,
         dados: null,
-        erro: resAtEstoqueProdPrincipal.erro,
+        erro: resGetProdutosMC.erro,
         total: 1,
       };
     }
 
-    // Aguarda 15s por garantia
-    await Util.Outros.delay(15000);
+    // TRATA DOS PRODUTOS/VARIAÇÕES
+    for (const produto of resGetProdutosIM.dados) {
+      const isGrade = produto.grid === true;
 
-    for (const p of resGetProdutos.dados) {
-      if (p.grid) continue;
+      const externalCodePai = produto.merchantMarketplaces?.find((m) => m.marketplaceName === 'MeuCarrinho')?.externalCode;
 
-      const externalCode = p.merchantMarketplaces.find((item) => item.marketplaceName == 'MeuCarrinho')?.externalCode;
-      const controleEstoque = p.stock.active;
-      const estoqueAtual = p.stock.stock;
-      const disponibilidade = p.availability == 'AVAILABLE' ? true : false;
+      if (!externalCodePai) continue;
 
-      // Define o novo status de disponibilidade do produto com base em regras de estoque e configuração
-      const novoStatus: 'UNAVAILABLE' | 'AVAILABLE' = !disponibilidade
-        ? 'UNAVAILABLE' // Se o produto estiver marcado como indisponível, retorna 'UNAVAILABLE'
-        : !controleEstoque
-        ? 'AVAILABLE' // Se o controle de estoque estiver desativado, o produto sempre estará disponível
-        : estoqueAtual > 0
-        ? 'AVAILABLE' // Se o estoque estiver sendo controlado e houver quantidade disponível, está disponível
-        : 'UNAVAILABLE'; // Caso contrário, está indisponível
+      const stockProduto = produto.stock?.stock ?? 0;
 
-      if (!externalCode) {
-        continue;
+      if (!isGrade) {
+        const availabilityProduto = calcularDisponibilidade(produto.availability, produto.stock?.active, produto.stock?.stock);
+
+        arrayProdutoSimples.push({
+          externalCode: externalCodePai,
+          externalCodePai,
+          availability: availabilityProduto,
+          availabilityPai: availabilityProduto,
+          stock: stockProduto,
+        });
+      } else {
+        const availability = produto.availability === 'AVAILABLE';
+        const hasAvailableVariation =
+          produto.variations?.some((v) => {
+            const s = v.stock?.stock ?? 0;
+            const a = v.stock?.active ?? false;
+            return v.availability === 'AVAILABLE' && (!a || (a && s > 0));
+          }) ?? false;
+
+        const availabilityPai: 'AVAILABLE' | 'UNAVAILABLE' = availability && hasAvailableVariation ? 'AVAILABLE' : 'UNAVAILABLE';
+
+        arrayProdutoGrade.push({
+          externalCode: externalCodePai,
+          externalCodePai,
+          availability: availabilityPai,
+          availabilityPai,
+          stock: stockProduto,
+        });
+
+        for (const variacao of produto.variations) {
+          /* const externalCodeVar = variacao.merchantMarketplaces?.find((m) => m.marketplaceName === 'MeuCarrinho')?.externalCode; */
+          const externalCodeVar = variacao.merchantMarketplaces[0].externalCode || null;
+          const variacaoCode = variacao.code;
+
+          if (!externalCodeVar) continue;
+
+          const stockVar = variacao.stock?.stock ?? 0;
+          const availabilityVar = calcularDisponibilidade(variacao.availability, variacao.stock?.active, variacao.stock?.stock);
+
+          const variacaoMC = await Repositorios.ProdutosMC.consultarPrimeiroRegistroPorColuna(empresaId, 'VARIATION_ITEM', 'vi_code', variacaoCode || '');
+
+          if (!variacaoMC || !variacaoMC.v_id) continue;
+
+          arrayProdutoGradeItem.push({
+            externalCode: externalCodeVar,
+            externalCodePai: variacaoMC.v_id,
+            availability: availabilityVar,
+            availabilityPai,
+            stock: stockVar,
+          });
+        }
       }
+    }
 
-      const resAtDisponibilidadeProduto = await Servicos.MeuCarrinho.atDisponibilidadeProduto(empresaId, externalCode, novoStatus);
-      if (!resAtDisponibilidadeProduto.sucesso) {
+    // ATUALIZAR PRODUTO SIMPLES
+    if (arrayProdutoSimples.length > 0) {
+      const resAtEstoqueProdPrincipal = await Servicos.MeuCarrinho.atEstoque(
+        empresaId,
+        arrayProdutoSimples.map((item) => ({ id: item.externalCode, stock: item.stock })),
+      );
+      if (!resAtEstoqueProdPrincipal.sucesso) {
         return {
           sucesso: false,
           dados: null,
-          erro: resAtDisponibilidadeProduto.erro,
+          erro: resAtEstoqueProdPrincipal.erro,
           total: 1,
         };
+      }
+
+      // Aguarda 15s por garantia
+      await Util.Outros.delay(15000);
+
+      for (const p of arrayProdutoSimples) {
+        const resAtDisponibilidadeProduto = await Servicos.MeuCarrinho.atDisponibilidadeProduto(empresaId, p.externalCode, p.availability);
+        if (!resAtDisponibilidadeProduto.sucesso) {
+          return {
+            sucesso: false,
+            dados: null,
+            erro: resAtDisponibilidadeProduto.erro,
+            total: 1,
+          };
+        }
+      }
+    }
+
+    // ATUALIZAR PRODUTO GRADE ITEM
+    if (arrayProdutoGradeItem.length > 0) {
+      const resAtEstoqueProdGradeItem = await Servicos.MeuCarrinho.atEstoqueVariacao(
+        empresaId,
+        arrayProdutoGradeItem.map((item) => ({ variationId: item.externalCodePai, id: item.externalCode, stock: item.stock })),
+      );
+      if (!resAtEstoqueProdGradeItem.sucesso) {
+        return {
+          sucesso: false,
+          dados: null,
+          erro: resAtEstoqueProdGradeItem.erro,
+          total: 1,
+        };
+      }
+
+      // Aguarda 15s por garantia
+      await Util.Outros.delay(15000);
+
+      for (const p of arrayProdutoGradeItem) {
+        const resAtDisponibilidadeProdGradeItem = await Servicos.MeuCarrinho.atDisponibilidadeVariacaoItem(
+          empresaId,
+          p.externalCodePai,
+          p.externalCode,
+          p.availability,
+        );
+        if (!resAtDisponibilidadeProdGradeItem.sucesso) {
+          return {
+            sucesso: false,
+            dados: null,
+            erro: resAtDisponibilidadeProdGradeItem.erro,
+            total: 1,
+          };
+        }
+      }
+
+      // Aguarda 15s por garantia
+      await Util.Outros.delay(15000);
+    }
+
+    // ATUALIZAR DISPONIBILIDADE PRODUTO GRADE PAI
+    if (arrayProdutoGrade.length > 0) {
+      for (const p of arrayProdutoGrade) {
+        const resAtDisponibilidadeProdGradePai = await Servicos.MeuCarrinho.atDisponibilidadeProduto(empresaId, p.externalCode, p.availabilityPai);
+        if (!resAtDisponibilidadeProdGradePai.sucesso) {
+          return {
+            sucesso: false,
+            dados: null,
+            erro: resAtDisponibilidadeProdGradePai.erro,
+            total: 1,
+          };
+        }
       }
     }
 

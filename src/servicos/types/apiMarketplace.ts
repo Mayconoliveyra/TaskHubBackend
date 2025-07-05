@@ -139,3 +139,11 @@ export interface IApiIMGetCategorias {
       }[]
     | null;
 }
+
+export interface IApiIMProdutoBaseForcaEstDisp {
+  externalCode: string;
+  externalCodePai: string;
+  availability: 'AVAILABLE' | 'UNAVAILABLE';
+  availabilityPai: 'AVAILABLE' | 'UNAVAILABLE';
+  stock: number;
+}

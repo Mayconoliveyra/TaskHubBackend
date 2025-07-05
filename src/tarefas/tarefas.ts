@@ -118,7 +118,7 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
       });
     } else if (tarefa.t_id === 7) {
       // Forma atualização de estoque e disponibilidade
-      const result = await Servicos.ApiMarketplace.forcaEstoqueDisponibilidade(tarefa.e_id);
+      const result = await Servicos.ApiMarketplace.forcaEstoqueDisponibilidade(tarefa.e_id, tarefa.e_mc_empresa_id || '');
 
       if (!result.sucesso) {
         await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
