@@ -23,7 +23,6 @@
         "newlinesBetween": "always",
         "groups": [
           ["module"],
-          ["/automacoes/"],
           ["/banco/"],
           ["/configs/"],
           ["/controladores/"],
