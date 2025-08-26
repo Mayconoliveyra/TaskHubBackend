@@ -167,7 +167,7 @@ const teste = async (req: Request, res: Response) => {
   }); */
 
   // const mc = await Servicos.MeuCarrinho.zerarCadastros(empresa_id, empresa.mc_empresa_id || '');
-  const sh = await Servicos.ApiMarketplace.autenticar('94ce7a7a-5344-4160-b53f-d40db79ebf71', '071BB891-BA59-4C7E-BF19-8FA06440572D');
+  const sh = await Servicos.MeuCarrinho.capturarImagens(1);
 
   console.log('sh', sh);
 

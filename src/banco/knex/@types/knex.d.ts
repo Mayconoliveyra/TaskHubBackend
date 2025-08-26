@@ -2,6 +2,7 @@ import { IEmpresa } from '../../models/empresa';
 import { INFSePadrao } from '../../models/NFSePadrao';
 import { IProdutoERP } from '../../models/produtoERP';
 import { IProdutoMC } from '../../models/produtoMC';
+import { IProdutoMCImagem } from '../../models/produtoMCImagem';
 import { ITarefa } from '../../models/tarefa';
 import { ITarefaEmpresa } from '../../models/tarefaEmpresa';
 import { IUsuario } from '../../models/usuario';
@@ -21,5 +22,6 @@ declare module 'knex/types/tables' {
     vw_tarefas_historico: IVwTarefaEmpresa;
     vw_tarefas_simultaneas: IVwTarefaProcessar;
     vw_tarefas_nao_simultaneas: IVwTarefaProcessar;
+    produtos_mc_img: IProdutoMCImagem;
   }
 }

@@ -2,6 +2,7 @@ export enum ETableNames {
   empresas = 'empresas',
   usuarios = 'usuarios',
   produtos_mc = 'produtos_mc',
+  produtos_mc_img = 'produtos_mc_img',
   produtos_erp = 'produtos_erp',
   tarefas = 'tarefas',
   tarefa_empresa = 'tarefa_empresa',

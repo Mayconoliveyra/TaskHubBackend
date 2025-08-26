@@ -147,3 +147,18 @@ export interface IApiIMProdutoBaseForcaEstDisp {
   availabilityPai: 'AVAILABLE' | 'UNAVAILABLE';
   stock: number;
 }
+
+export interface IApiIMUploadImagem {
+  fileBase64: string;
+  fileName: string;
+  fileContentType: string;
+  description: string;
+}
+
+export interface IApiIMUploadImagemResponse {
+  id: string;
+  fileName: string;
+  description: string;
+  url: string;
+  thumbnailUrl: string;
+}

@@ -1,3 +1,5 @@
+import sharp from 'sharp';
+
 import { IProdutoMC } from '../banco/models/produtoMC';
 
 import { Repositorios } from '../repositorios';
@@ -928,8 +930,168 @@ const atEstoqueVariacao = async (empresaId: number, variacoes: { variationId: st
   }
 };
 
+const capturarImagens = async (empresaId: number): Promise<IRetorno<string>> => {
+  const TARGET_DIMENSION = 1000; // Máximo de 1000px para largura e altura
+  const MAX_SIZE_BYTES: number = Math.floor(1.5 * 1024 * 1024); // 1,7MB
+  const IMAGEM_PADRAO_MC = 'https://meucarrinhostg.blob.core.windows.net/images/default_product.png';
+
+  const verifyUrl = (url: string) => {
+    const dominioPermitido1 = 'integrationmktstg.blob.core.windows.net';
+    const dominioPermitido2 = 'softcomshopstg.blob.core.windows.net';
+    return url.includes(dominioPermitido1) || url.includes(dominioPermitido2);
+  };
+
+  const convertImageToBase64 = async (url: string): Promise<string | null> => {
+    try {
+      // Baixar a imagem como array de bytes
+      const response = await Axios.defaultAxios.get(url, { responseType: 'arraybuffer' });
+      const originalBuffer: Buffer = Buffer.from(response.data, 'binary');
+
+      // Obter metadados da imagem para extrair as dimensões
+      const metadata = await sharp(originalBuffer).metadata();
+      if (!metadata.width || !metadata.height) {
+        throw new Error('Não foi possível obter as dimensões da imagem.');
+      }
+
+      // Define dimensões iniciais e limita a um máximo de TARGET_DIMENSION
+      let width: number = metadata.width;
+      let height: number = metadata.height;
+      if (width > TARGET_DIMENSION || height > TARGET_DIMENSION) {
+        const scaleFactor = TARGET_DIMENSION / Math.max(width, height);
+        width = Math.floor(width * scaleFactor);
+        height = Math.floor(height * scaleFactor);
+      }
+
+      // Cria uma primeira versão da imagem com as dimensões ajustadas
+      let quality = 100;
+      let resizedBuffer: Buffer = await sharp(originalBuffer).resize(width, height, { fit: 'inside' }).jpeg({ quality }).toBuffer();
+
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      // Loop iterativo para reduzir a imagem até que esteja abaixo de 1,7MB
+      while (resizedBuffer.length > MAX_SIZE_BYTES && attempts < maxAttempts) {
+        quality = quality > 30 ? quality - 10 : quality;
+        width = Math.floor(width * 0.9);
+        height = Math.floor(height * 0.9);
+
+        resizedBuffer = await sharp(originalBuffer).resize(width, height, { fit: 'inside' }).jpeg({ quality }).toBuffer();
+        attempts++;
+      }
+
+      if (resizedBuffer.length > MAX_SIZE_BYTES) {
+        Util.Log.warn('A imagem ainda excede 1.5MB após as tentativas de compressão.');
+      }
+
+      // Converter a imagem final para Base64
+      return resizedBuffer.toString('base64');
+    } catch (error) {
+      Util.Log.error(`Erro ao baixar ou converter a imagem (URL: ${url}).`, error);
+      return null;
+    }
+  };
+
+  try {
+    const allProdutos = await getProdutos(empresaId);
+    if (!allProdutos.sucesso) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: allProdutos.erro,
+        total: 1,
+      };
+    }
+
+    for (const produto of allProdutos.dados) {
+      let ordem = 1; // começa em 1 para a primeira imagem
+      const code = produto.code;
+      const totalImagens = produto.images.filter((img) => img.path !== IMAGEM_PADRAO_MC).length;
+
+      if (!code) {
+        Util.Log.warn(`${MODULO} | Produto sem código PDV, captura de imagem será ignorado | Code: ${code}`);
+        continue;
+      }
+
+      // soft-delete de todas as imagens atuais desse produto (se houver ao menos 1 imagem válida)
+      if (totalImagens >= 1) {
+        await Repositorios.ProdutosMC.apagarImagensPorProdutoCode(empresaId, code);
+      }
+
+      for (const img of produto.images) {
+        if (img.path === IMAGEM_PADRAO_MC) continue;
+
+        const isHostingValid = verifyUrl(img.path);
+
+        if (isHostingValid) {
+          await Repositorios.ProdutosMC.reativarOuInserirImagem({
+            empresa_id: empresaId,
+            produto_code: code,
+            url_origem: img.path,
+            url_nova: img.path,
+            ordem, // numérica 1,2,3...
+          });
+        } else {
+          const imgBase64 = await convertImageToBase64(img.path);
+          if (!imgBase64) {
+            Util.Log.error(`${MODULO} | Não foi possível converter a imagem. | Code: ${code} | Url: ${img.path}`);
+
+            return {
+              sucesso: false,
+              dados: null,
+              erro: `O processo foi cancelado devido a uma falha na conversão da imagem do produto (código ${code})`,
+              total: 1,
+            };
+          }
+
+          const resultInsertImg = await Servicos.ApiMarketplace.uploadImagem(imgBase64, code);
+
+          if (resultInsertImg.sucesso) {
+            await Repositorios.ProdutosMC.reativarOuInserirImagem({
+              empresa_id: empresaId,
+              produto_code: code,
+              base64: imgBase64,
+              url_origem: img.path,
+              url_nova: resultInsertImg.dados.url,
+              ordem, //numérica 1,2,3...
+            });
+          }
+        }
+
+        ordem += 1; // incrementa para a próxima imagem válida
+      }
+    }
+
+    return {
+      sucesso: true,
+      dados: Util.Msg.sucesso,
+      erro: null,
+      total: 1,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao realizar captura de imagens.`, error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 1,
+    };
+  }
+};
+
 const zerarCadastros = async (empresaId: number, merchantId: string): Promise<IRetorno<string>> => {
   try {
+    // Antes de zerar os cadastros captura as imagens
+    const resultCapturarImagens = await capturarImagens(empresaId);
+    if (!resultCapturarImagens.sucesso) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: resultCapturarImagens.erro,
+        total: 1,
+      };
+    }
+
     const allCategoriasMc = await getCategorias(empresaId, merchantId);
     if (!allCategoriasMc.sucesso) {
       return {
@@ -1651,4 +1813,5 @@ export const MeuCarrinho = {
   alimentarProdutos,
   exportarMercadoriasParaMeuCarrinho,
   zerarCadastros,
+  capturarImagens,
 };

@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 import { Repositorios } from '../repositorios';
 
 import { Util } from '../util';
@@ -12,6 +14,8 @@ import {
   IApiIMGetProdutos,
   IApiIMGetCategorias,
   IApiIMProdutoBaseForcaEstDisp,
+  IApiIMUploadImagemResponse,
+  IApiIMUploadImagem,
 } from './types/apiMarketplace';
 
 const BASE_URL_API_IMK = 'https://api-imkt.softcomservices.com';
@@ -204,6 +208,54 @@ const getCategorias = async (empresaId: number): Promise<IRetorno<IApiIMGetCateg
   }
 };
 
+const uploadImagem = async (base64: string, code: string): Promise<IRetorno<IApiIMUploadImagemResponse>> => {
+  const url = 'https://api-imkt.softcomservices.com/images';
+  const basicAuth = {
+    username: '94ce7a7a-5344-4160-b53f-d40db79ebf71',
+    password: 'A123ED88-5DCF-421A-9EAD-8B5D2E26704E',
+  };
+
+  try {
+    const modelo: IApiIMUploadImagem = {
+      fileBase64: base64,
+      fileContentType: 'image/png',
+      fileName: `${uuidv4()}.png`,
+      description: `${code} - taskhub`,
+    };
+
+    const response = await Axios.defaultAxios.post<IApiIMUploadImagemResponse[]>(url, [modelo], {
+      auth: basicAuth,
+      timeout: 1000 * 60 * 2,
+    });
+
+    if (response.status === 200 && response.data[0]) {
+      return {
+        sucesso: true,
+        dados: response.data[0],
+        erro: null,
+        total: 1,
+      };
+    }
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 0,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao fazer upload de imagem`, error);
+    const erroTratado = formatarErroValidacao(error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: erroTratado,
+      total: 1,
+    };
+  }
+};
+
 const deleteProdutoPorId = async (empresaId: number, code: string): Promise<IRetorno<{ code: string }>> => {
   try {
     const apiAxiosApiIM = await Axios.axiosApiMarketplace(empresaId);
@@ -281,6 +333,26 @@ const zerarIntegracao = async (empresaId: number): Promise<IRetorno<string>> => 
         total: 1,
       };
     }
+
+    // Verifica se MEU CARRINHO ta habilitado, caso sim, captura imagens.
+    const ehMeuCarrinho = resGetMarketplaces.dados.find((canal) => canal.marketplaceName === 'MeuCarrinho');
+    if (ehMeuCarrinho) {
+      const empresa = await Repositorios.Empresa.consultarPrimeiroRegistro([{ coluna: 'id', operador: '=', valor: empresaId }]);
+      if (!empresa.sucesso) {
+        return {
+          sucesso: false,
+          dados: null,
+          erro: empresa.erro,
+          total: 1,
+        };
+      }
+
+      if (empresa.dados.mc_empresa_id) {
+        // Antes de zerar os cadastros captura as imagens. Se houver erro ignora a captura.
+        await Servicos.MeuCarrinho.capturarImagens(empresaId);
+      }
+    }
+
     if (!resGetCategorias.sucesso) {
       return {
         sucesso: false,
@@ -581,4 +653,5 @@ export const ApiMarketplace = {
   deleteCategoriaPorId,
   zerarIntegracao,
   forcaEstoqueDisponibilidade,
+  uploadImagem,
 };

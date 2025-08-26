@@ -1,10 +1,13 @@
 import { ETableNames } from '../banco/eTableNames';
 import { Knex } from '../banco/knex';
 import { IProdutoMC } from '../banco/models/produtoMC';
+import { IProdutoMCImagem } from '../banco/models/produtoMCImagem';
 
 import { Util } from '../util';
+import { IRetorno } from '../util/tipagens';
 
 const MODULO = '[Produtos MC]';
+const MODULO_IMAGEM = '[Produtos Imagem MC]';
 
 const apagarProdutosPorEmpresaId = async (empresaId: number) => {
   try {
@@ -73,10 +76,106 @@ const consultar = async (
   }
 };
 
+const reativarOuInserirImagem = async (imagem: Partial<IProdutoMCImagem>): Promise<IRetorno<string>> => {
+  try {
+    // Verifica se a imagem já existe com deleted_at preenchido
+    const imagemExistente = await Knex(ETableNames.produtos_mc_img)
+      .where({
+        url_origem: imagem.url_origem,
+        produto_code: imagem.produto_code,
+        empresa_id: imagem.empresa_id,
+      })
+      .whereNotNull('deleted_at')
+      .first();
+
+    if (imagemExistente) {
+      // Se existe, "reativa" a imagem
+      const atualizacao = await Knex(ETableNames.produtos_mc_img).where('id', imagemExistente.id).update({
+        deleted_at: null,
+        created_at: Util.DataHora.obterDataAtual(),
+        ordem: imagem.ordem,
+      });
+
+      if (atualizacao) {
+        return {
+          sucesso: true,
+          dados: Util.Msg.sucesso,
+          erro: null,
+          total: 1,
+        };
+      }
+    } else {
+      // Se não existe, faz a inserção normal
+      const result = await Knex(ETableNames.produtos_mc_img).insert(imagem);
+
+      if (result) {
+        return {
+          sucesso: true,
+          dados: Util.Msg.sucesso,
+          erro: null,
+          total: 1,
+        };
+      }
+    }
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 0,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO_IMAGEM} | Erro ao inserir imagem produtos meu carrinho.`, error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 0,
+    };
+  }
+};
+
+const apagarImagensPorProdutoCode = async (empresaId: number, code: string): Promise<IRetorno<string>> => {
+  try {
+    const result = await Knex.table(ETableNames.produtos_mc_img).where('empresa_id', empresaId).andWhere('produto_code', code).whereNull('deleted_at').update({
+      deleted_at: Util.DataHora.obterDataAtual(),
+      ordem: 0,
+    });
+
+    if (result) {
+      return {
+        sucesso: true,
+        dados: Util.Msg.sucesso,
+        erro: null,
+        total: 1,
+      };
+    } else {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: Util.Msg.erroInesperado,
+        total: 0,
+      };
+    }
+  } catch (error) {
+    Util.Log.error(`${MODULO_IMAGEM} | Erro ao apagar imagens do produto`, error);
+
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 0,
+    };
+  }
+};
+
 export const ProdutosMC = {
   inserir,
   apagarProdutosPorEmpresaId,
   consultarCategorias,
   consultarPrimeiroRegistroPorColuna,
   consultar,
+  reativarOuInserirImagem,
+  apagarImagensPorProdutoCode,
 };
