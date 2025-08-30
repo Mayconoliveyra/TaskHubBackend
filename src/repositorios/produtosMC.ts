@@ -170,6 +170,34 @@ const apagarImagensPorProdutoCode = async (empresaId: number, code: string): Pro
   }
 };
 
+const consultarImagens = async (empresaId: number): Promise<IRetorno<IProdutoMCImagem[]>> => {
+  try {
+    const result = await Knex(ETableNames.produtos_mc_img)
+      .select()
+      .where('empresa_id', empresaId)
+      .whereNull('deleted_at')
+      .orderBy([
+        { column: 'produto_code', order: 'asc' },
+        { column: 'ordem', order: 'asc' },
+      ]);
+
+    return {
+      sucesso: true,
+      dados: result,
+      erro: null,
+      total: result.length,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO_IMAGEM} | Erro ao consultar imagens`, error);
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 0,
+    };
+  }
+};
+
 export const ProdutosMC = {
   inserir,
   apagarProdutosPorEmpresaId,
@@ -178,4 +206,5 @@ export const ProdutosMC = {
   consultar,
   reativarOuInserirImagem,
   apagarImagensPorProdutoCode,
+  consultarImagens,
 };

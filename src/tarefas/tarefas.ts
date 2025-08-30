@@ -131,6 +131,21 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
           feedback: result.dados,
         });
       }
+    } else if (tarefa.t_id === 8) {
+      //Sincronizar imagens Meu Carrinho
+      const result = await Servicos.MeuCarrinho.sincronizarImagens(tarefa.e_id);
+
+      if (!result.sucesso) {
+        await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
+          status: 'ERRO',
+          feedback: result.erro,
+        });
+      } else {
+        await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
+          status: 'FINALIZADO',
+          feedback: result.dados,
+        });
+      }
     } else {
       Util.Log.error(`${MODULO} | executarTarefa | Nenhuma execução definida para a tarefa: ${tarefa.t_nome}`);
 

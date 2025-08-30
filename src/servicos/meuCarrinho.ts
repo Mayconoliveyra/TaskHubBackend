@@ -34,6 +34,7 @@ import { Servicos } from '.';
 const BASE_URL_MC = 'https://api.meucarrinho.delivery';
 
 const MODULO = '[Meu Carrinho]';
+const IMAGEM_PADRAO_MC = 'https://meucarrinhostg.blob.core.windows.net/images/default_product.png';
 
 const formatarErroValidacao = (erro: any): string => {
   try {
@@ -933,7 +934,6 @@ const atEstoqueVariacao = async (empresaId: number, variacoes: { variationId: st
 const capturarImagens = async (empresaId: number): Promise<IRetorno<string>> => {
   const TARGET_DIMENSION = 1000; // Máximo de 1000px para largura e altura
   const MAX_SIZE_BYTES: number = Math.floor(1.5 * 1024 * 1024); // 1,7MB
-  const IMAGEM_PADRAO_MC = 'https://meucarrinhostg.blob.core.windows.net/images/default_product.png';
 
   const verifyUrl = (url: string) => {
     const dominioPermitido1 = 'integrationmktstg.blob.core.windows.net';
@@ -1075,6 +1075,98 @@ const capturarImagens = async (empresaId: number): Promise<IRetorno<string>> => 
       dados: null,
       erro: Util.Msg.erroInesperado,
       total: 1,
+    };
+  }
+};
+
+const sincronizarImagens = async (empresaId: number): Promise<IRetorno<string>> => {
+  try {
+    const allProdutos = await getProdutos(empresaId);
+    if (!allProdutos.sucesso) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: allProdutos.erro,
+        total: 0,
+      };
+    }
+
+    // 1) Colete TODAS as URLs já existentes no Meu Carrinho (ativas)
+    const urlsExistentesMC = new Set(
+      allProdutos.dados.flatMap((p) => (p.images ?? []).filter((img) => img?.path && img.path !== IMAGEM_PADRAO_MC).map((img) => img.path)),
+    );
+
+    // 2) Busque todas as imagens coletadas na sua base
+    const imagensTodasColeta = await Repositorios.ProdutosMC.consultarImagens(empresaId);
+    if (!imagensTodasColeta.sucesso) {
+      return {
+        sucesso: false,
+        dados: null,
+        erro: imagensTodasColeta.erro,
+        total: 0,
+      };
+    }
+
+    let inseridas = 0;
+    let ignoradas = 0;
+
+    // 3) Para cada imagem coletada, só insira se NÃO existir no Meu Carrinho
+    for (const img of imagensTodasColeta.dados) {
+      // escolha a URL que será usada para inserir
+
+      if (img.url_nova == IMAGEM_PADRAO_MC) {
+        ignoradas++;
+        continue;
+      }
+
+      if (urlsExistentesMC.has(img.url_nova)) {
+        // já existe no Meu Carrinho → NÃO inserir novamente
+        ignoradas++;
+        continue;
+      }
+
+      const produtoId = allProdutos.dados.find((p) => p.code == img.produto_code)?.id;
+      if (!produtoId) {
+        Util.Log.warn(`${MODULO} | Não foi possível encontrar o produto. | code:${img.produto_code}`);
+
+        // Se não encontrar o id do produto ignora
+        ignoradas++;
+        continue;
+      }
+
+      // IMPORTANTE: se você está adicionando para um produto recém-criado,
+      // garanta que tem o ID/Code correto. Aqui uso resCriarProduto.dados.id conforme seu snippet.
+      const resAddImgPorUrl = await Servicos.MeuCarrinho.addImgPorUrl(empresaId, produtoId, img.url_nova);
+
+      if (!resAddImgPorUrl.sucesso) {
+        return {
+          sucesso: false,
+          dados: null,
+          erro: resAddImgPorUrl.erro,
+          total: inseridas,
+        };
+      }
+
+      // adiciona no Set para evitar duplicar na mesma execução
+      urlsExistentesMC.add(img.url_nova);
+      inseridas++;
+    }
+
+    Util.Log.info(`Sincronização de imagens concluída. Inseridas: ${inseridas} | Ignoradas: ${ignoradas}`);
+
+    return {
+      sucesso: true,
+      dados: `Sincronização de imagens concluída. Inseridas: ${inseridas} | Ignoradas: ${ignoradas}`,
+      erro: null,
+      total: inseridas,
+    };
+  } catch (error) {
+    Util.Log.error(`${MODULO} | Erro ao realizar sincronização de imagens.`, error);
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 0,
     };
   }
 };
@@ -1814,4 +1906,5 @@ export const MeuCarrinho = {
   exportarMercadoriasParaMeuCarrinho,
   zerarCadastros,
   capturarImagens,
+  sincronizarImagens,
 };

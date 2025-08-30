@@ -167,7 +167,7 @@ const teste = async (req: Request, res: Response) => {
   }); */
 
   // const mc = await Servicos.MeuCarrinho.zerarCadastros(empresa_id, empresa.mc_empresa_id || '');
-  const sh = await Servicos.MeuCarrinho.capturarImagens(1);
+  const sh = await Servicos.MeuCarrinho.sincronizarImagens(1);
 
   console.log('sh', sh);
 
