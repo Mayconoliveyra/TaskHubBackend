@@ -434,10 +434,14 @@ const forcaEstoqueDisponibilidade = async (empresaId: number, merchantId: string
     disponibilidadeOriginal: string | null | undefined,
     controleEstoque: boolean | null | undefined,
     estoqueAtual: number | null | undefined,
+    forcaDisponivel = false,
   ): 'AVAILABLE' | 'UNAVAILABLE' {
     const disponibilidade = disponibilidadeOriginal === 'AVAILABLE';
     const controle = controleEstoque ?? false;
     const estoque = estoqueAtual ?? 0;
+
+    // Força que seja disponível
+    if (forcaDisponivel) return 'AVAILABLE';
 
     if (!disponibilidade) return 'UNAVAILABLE';
     if (!controle) return 'AVAILABLE';
