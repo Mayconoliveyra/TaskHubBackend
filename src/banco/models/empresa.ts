@@ -1,5 +1,6 @@
 export interface IEmpresa {
   id: number;
+  uuid: string;
 
   registro: string;
   nome: string;

@@ -11,7 +11,7 @@ const MODULO = '[Empresa]';
 
 const cadastrar = async (empresa: IBodyCadastrarProps): Promise<IRetorno<string>> => {
   try {
-    const result = await Knex(ETableNames.empresas).insert(empresa);
+    const result = await Knex(ETableNames.empresas).insert({ uuid: Util.UuidV4.gerar(), ...empresa });
 
     if (result) {
       return {
