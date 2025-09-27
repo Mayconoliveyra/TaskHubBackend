@@ -20,6 +20,59 @@ const getLogFileTransport = () => {
   return new winston.transports.File({ filename: logFile, level: 'info' });
 };
 
+const getCallerInfo = (): string => {
+  try {
+    const err = new Error();
+    const stack = err.stack?.split('\n').map((l) => l.trim()) || [];
+
+    const usefulLines = stack
+      .slice(1)
+      .filter((line) => line.startsWith('at') && !line.includes('log.util.ts') && !line.includes('winston') && !line.includes('internal/'));
+
+    // 1) Procura a primeira linha com função nomeada (ignorando Generator/Promise/__awaiter)
+    const withFunc = usefulLines.find(
+      (line) =>
+        line.includes(`${path.sep}src${path.sep}`) && // só dentro de src/
+        /\s+\(.*\)/.test(line) &&
+        !line.includes('Generator') &&
+        !line.includes('__awaiter') &&
+        !line.includes('Promise'),
+    );
+
+    if (withFunc) {
+      const matchFunc = withFunc.match(/at (.+?) \((.*):\d+:\d+\)/);
+      if (matchFunc) {
+        let functionName = matchFunc[1];
+        const fileName = path.basename(matchFunc[2]);
+        functionName = functionName.replace(/^Object\./, '');
+        return `${fileName} | ${functionName}`;
+      }
+    }
+
+    // 2) Se não tiver função nomeada, pega a primeira linha do src/
+    const inSrc = usefulLines.find((line) => line.includes(`${path.sep}src${path.sep}`));
+    if (inSrc) {
+      const matchFile = inSrc.match(/at (.*):\d+:\d+/);
+      if (matchFile) {
+        const fileName = path.basename(matchFile[1]);
+        return `${fileName} | <anonymous>`;
+      }
+    }
+
+    // 3) Fallback final (pode ser express, layer, etc.)
+    const callerLine = usefulLines[0];
+    const matchFile = callerLine?.match(/at (.*):\d+:\d+/);
+    if (matchFile) {
+      const fileName = path.basename(matchFile[1]);
+      return `${fileName} | <anonymous>`;
+    }
+
+    return '<unknown>';
+  } catch {
+    return '<error>';
+  }
+};
+
 // Criar o transporte inicial
 let fileTransport = getLogFileTransport();
 
@@ -90,7 +143,9 @@ const checkAndRotateLogFile = () => {
 const customLogger = (level: string, message: string, additional?: any) => {
   checkAndRotateLogFile(); // Verifica se o log precisa ser rotacionado
 
-  let formattedMessage = message;
+  const callerFile = getCallerInfo();
+
+  let formattedMessage = `${callerFile} | ${message}`;
   let formattedAdditional;
 
   if (additional !== undefined) {
@@ -111,5 +166,4 @@ export const Log = {
   info: (message: string, additional?: any) => customLogger('info', message, additional),
   error: (message: string, additional?: any) => customLogger('error', message, additional),
   warn: (message: string, additional?: any) => customLogger('warn', message, additional),
-  debug: (message: string, additional?: any) => customLogger('debug', message, additional),
 };
