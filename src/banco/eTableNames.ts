@@ -7,6 +7,8 @@ export enum ETableNames {
   tarefas = 'tarefas',
   tarefa_empresa = 'tarefa_empresa',
   nfse_padroes = 'nfse_padroes',
+  banco_imagens = 'banco_imagens',
+  banco_imagem_produto_loja = 'banco_imagem_produto_loja',
   vw_tarefas_empresas = 'vw_tarefas_empresas',
   vw_tarefas_simultaneas = 'vw_tarefas_simultaneas',
   vw_tarefas_nao_simultaneas = 'vw_tarefas_nao_simultaneas',

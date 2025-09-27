@@ -1,3 +1,6 @@
+import { IBancoImagem } from '../../models/bancoImagem';
+import { IBancoImagemProdutoLoja } from '../../models/bancoImagemProdutoLoja';
+
 import { IEmpresa } from '../../models/empresa';
 import { INFSePadrao } from '../../models/NFSePadrao';
 import { IProdutoERP } from '../../models/produtoERP';
@@ -23,5 +26,7 @@ declare module 'knex/types/tables' {
     vw_tarefas_simultaneas: IVwTarefaProcessar;
     vw_tarefas_nao_simultaneas: IVwTarefaProcessar;
     produtos_mc_img: IProdutoMCImagem;
+    banco_imagens: IBancoImagem;
+    banco_imagem_produto_loja: IBancoImagemProdutoLoja;
   }
 }

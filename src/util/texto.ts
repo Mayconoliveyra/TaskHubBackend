@@ -125,6 +125,8 @@ const tratarComoBoolean = (valor: unknown): boolean | undefined => {
 };
 
 const formatarParaTextoSimples = (texto: string) => {
+  if (!texto) return ''; // Retorna string vazia se for null ou undefined
+
   return texto
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // Remove acentos

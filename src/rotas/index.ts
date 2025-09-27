@@ -9,7 +9,7 @@ const router = Router();
 
 router.get('/teste-api', (req, res) => res.status(StatusCodes.OK).json('API TESTADA!.'));
 
-router.get('/teste', Controladores.MeuCarrinho.teste);
+router.get('/teste', Controladores.Teste.teste);
 
 router.get('/empresa', Controladores.Empresa.consultarValidacao, Controladores.Empresa.consultar);
 router.post('/empresa', Controladores.Empresa.cadastrarValidacao, Controladores.Empresa.cadastrar);
@@ -36,5 +36,7 @@ router.patch('/tarefa/cancelar/:tarefaId', Controladores.Tarefa.cancelarValidaca
 router.get('/tarefa/historico', Controladores.Tarefa.historicoValidacao, Controladores.Tarefa.historico);
 
 router.get('/tarefa/nfse/padroes', Controladores.Tarefa.consultarPadroesNFSe);
+
+router.get('/banco-imagem/:uuid', Controladores.BancoImagem.consultarMCProdutosImagensLojaValidacao, Controladores.BancoImagem.consultarMCProdutosImagensLoja);
 
 export { router };

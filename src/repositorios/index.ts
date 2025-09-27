@@ -1,3 +1,5 @@
+import * as bancoImagens from './bancoImagens';
+
 import * as empresa from './empresa';
 import * as nfse from './nfse';
 import * as produtosERP from './produtosERP';
@@ -6,4 +8,4 @@ import * as tarefa from './tarefa';
 import * as tarefaEmpresa from './tarefaEmpresa';
 import * as usuario from './usuario';
 
-export const Repositorios = { ...usuario, ...empresa, ...produtosMC, ...produtosERP, ...tarefa, ...tarefaEmpresa, ...nfse };
+export const Repositorios = { ...usuario, ...empresa, ...produtosMC, ...produtosERP, ...tarefa, ...tarefaEmpresa, ...nfse, ...bancoImagens };

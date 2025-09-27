@@ -1,3 +1,5 @@
+import * as bancoImagens from './bancoImagens';
+
 import * as apiMarketplace from './apiMarketplace';
 import * as bcryptImp from './bcrypt';
 import * as jwt from './jwt';
@@ -7,4 +9,4 @@ import * as openaiIA from './openaiIA';
 import * as selfHost from './selfHost';
 import * as softcomshop from './softcomshop';
 
-export const Servicos = { ...jwt, ...bcryptImp, ...softcomshop, ...meuCarrinho, ...selfHost, ...apiMarketplace, ...openaiIA, ...nfse };
+export const Servicos = { ...jwt, ...bcryptImp, ...softcomshop, ...meuCarrinho, ...selfHost, ...apiMarketplace, ...openaiIA, ...nfse, ...bancoImagens };
