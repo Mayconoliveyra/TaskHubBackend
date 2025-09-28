@@ -15,8 +15,17 @@ const cadastrar = async (empresa: IBodyCadastrarProps): Promise<IRetorno<string>
     const [id] = await Knex(ETableNames.empresas).insert({ uuid: Util.UuidV4.gerar(), ...empresa });
 
     if (id) {
-      // Extrai o primeiro nome
-      const primeiroNome = empresa.nome?.split(' ')[0] ?? '';
+      // Limpa espaços extras antes de pegar o primeiro nome
+      let primeiroNome = empresa.nome?.trim().split(' ')[0] ?? '';
+
+      // Remove acentuação
+      primeiroNome = primeiroNome.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+      // Mantém apenas letras, números e hífen
+      primeiroNome = primeiroNome.replace(/[^a-zA-Z0-9-]/g, '');
+
+      // Deixa tudo minúsculo
+      primeiroNome = primeiroNome.toLowerCase();
 
       // Monta o zt_host
       const zt_host = `${id}-${primeiroNome}`;
