@@ -6,6 +6,10 @@ import { Middlewares } from '../middlewares';
 
 import { Repositorios } from '../repositorios';
 
+import { Servicos } from '../servicos';
+
+import { Util } from '../util';
+
 interface IQueryProps {
   pagina?: number;
   limite?: number;
@@ -93,6 +97,13 @@ const editarValidacao = Middlewares.validacao((getSchema) => ({
         .test('cpf-cnpj', 'CPF ou CNPJ inválido', (valor) => !!valor && isCpfOrCnpj(valor)),
       erp: yup.string().oneOf(['SOFTSHOP', 'SOFTCOMSHOP']).required(),
       ativo: yup.boolean().required(),
+    }),
+  ),
+}));
+const consultarZeroTrustPorUuidValidacao = Middlewares.validacao((getSchema) => ({
+  params: getSchema<{ uuid: string }>(
+    yup.object().shape({
+      uuid: yup.string().required().trim().length(36).test('is-uuid-v4', 'id inválido', Util.UuidV4.uuidV4Test),
     }),
   ),
 }));
@@ -184,6 +195,41 @@ const editar = async (req: Request<{ empresaId: string }, {}, IBodyEditarProps>,
   }
 };
 
+const consultarZeroTrustPorUuid = async (req: Request<{ uuid: string }>, res: Response) => {
+  const empresaUuid = req.params.uuid;
+
+  const empresa = await Repositorios.Empresa.consultarPrimeiroRegistro([{ coluna: 'uuid', operador: '=', valor: empresaUuid }]);
+  if (!empresa.sucesso) {
+    return res.status(StatusCodes.NOT_FOUND).json({ errors: { default: empresa.erro } });
+  }
+
+  const jsonConfig = await Servicos.Empresa.gerarJsonZeroTrust(empresaUuid);
+  if (!empresa.sucesso) {
+    return res.status(StatusCodes.NOT_FOUND).json({ errors: { default: jsonConfig.erro } });
+  }
+
+  const modulo = await Repositorios.ConfigModulo.consultarPorModulo('ZERO_TRUST');
+
+  if (!modulo.sucesso) {
+    return {
+      sucesso: false,
+      dados: null,
+      erro: Util.Msg.erroInesperado,
+      total: 0,
+    };
+  }
+
+  return res.status(StatusCodes.OK).json({
+    config: {
+      cert_url_download: modulo.dados.zt_cert_url_download,
+      cert_versao: modulo.dados.zt_cert_versao,
+      arquivos_url_download: modulo.dados.zt_cert_url_download,
+      arquivos_url_versao: modulo.dados.zt_arquivos_url_versao,
+    },
+    json: jsonConfig.dados,
+  });
+};
+
 export const Empresa = {
   cadastrarValidacao,
   consultarValidacao,
@@ -193,4 +239,6 @@ export const Empresa = {
   consultar,
   consultarPorId,
   editar,
+  consultarZeroTrustPorUuidValidacao,
+  consultarZeroTrustPorUuid,
 };

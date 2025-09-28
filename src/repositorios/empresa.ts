@@ -11,9 +11,19 @@ const MODULO = '[Empresa]';
 
 const cadastrar = async (empresa: IBodyCadastrarProps): Promise<IRetorno<string>> => {
   try {
-    const result = await Knex(ETableNames.empresas).insert({ uuid: Util.UuidV4.gerar(), ...empresa });
+    // Faz o insert e retorna o id (array de ids)
+    const [id] = await Knex(ETableNames.empresas).insert({ uuid: Util.UuidV4.gerar(), ...empresa });
 
-    if (result) {
+    if (id) {
+      // Extrai o primeiro nome
+      const primeiroNome = empresa.nome?.split(' ')[0] ?? '';
+
+      // Monta o zt_host
+      const zt_host = `${id}-${primeiroNome}`;
+
+      // Atualiza o registro recém-criado
+      await Knex(ETableNames.empresas).update({ zt_host }).where('id', id);
+
       return {
         sucesso: true,
         dados: Util.Msg.sucesso,
@@ -29,7 +39,7 @@ const cadastrar = async (empresa: IBodyCadastrarProps): Promise<IRetorno<string>
       };
     }
   } catch (error) {
-    Util.Log.error(`${MODULO} | Erro ao realizar cadastro.`, error);
+    Util.Log.error(`Erro ao realizar cadastro.`, error);
 
     return {
       sucesso: false,

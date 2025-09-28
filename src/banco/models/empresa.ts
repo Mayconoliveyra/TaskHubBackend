@@ -8,6 +8,14 @@ export interface IEmpresa {
 
   erp: 'SOFTSHOP' | 'SOFTCOMSHOP';
 
+  zt_host: string;
+  zt_host_remoto_porta: number;
+  zt_host_remoto_porta_ativo: boolean;
+  zt_host_sql_porta: number;
+  zt_host_sql_porta_ativo: boolean;
+  zt_host_selfhost_porta: number;
+  zt_host_selfhost_porta_ativo: boolean;
+
   ss_qrcode_url?: string | null;
   ss_url?: string | null;
   ss_client_id?: string | null;

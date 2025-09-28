@@ -1,6 +1,7 @@
 import { IBancoImagem } from '../../models/bancoImagem';
 import { IBancoImagemProdutoLoja } from '../../models/bancoImagemProdutoLoja';
 
+import { IConfigModulo } from '../../models/configModulo';
 import { IEmpresa } from '../../models/empresa';
 import { INFSePadrao } from '../../models/NFSePadrao';
 import { IProdutoERP } from '../../models/produtoERP';
@@ -9,6 +10,7 @@ import { IProdutoMCImagem } from '../../models/produtoMCImagem';
 import { ITarefa } from '../../models/tarefa';
 import { ITarefaEmpresa } from '../../models/tarefaEmpresa';
 import { IUsuario } from '../../models/usuario';
+import { IVwTarefaEmpresa } from '../../models/vwTarefaEmpresa';
 import { IVwTarefaEmpresa } from '../../models/vwTarefaEmpresa';
 import { IVwTarefaProcessar } from '../../models/vwTarefaProcessar';
 
@@ -21,6 +23,7 @@ declare module 'knex/types/tables' {
     tarefas: ITarefa;
     tarefa_empresa: ITarefaEmpresa;
     nfse_padroes: INFSePadrao;
+    config_modulos: IConfigModulo;
     vw_tarefas_empresas: IVwTarefaEmpresa;
     vw_tarefas_historico: IVwTarefaEmpresa;
     vw_tarefas_simultaneas: IVwTarefaProcessar;

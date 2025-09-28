@@ -17,6 +17,8 @@ router.put('/empresa/:empresaId', Controladores.Empresa.editarValidacao, Control
 
 router.get('/empresa/:empresaId', Controladores.Empresa.consultarPorIdValidacao, Controladores.Empresa.consultarPorId);
 
+router.get('/empresa/zerotrust/:uuid', Controladores.Empresa.consultarZeroTrustPorUuidValidacao, Controladores.Empresa.consultarZeroTrustPorUuid);
+
 router.post('/configuracoes/softcomshop', Controladores.SoftcomShop.configuracaoValidacao, Controladores.SoftcomShop.configuracao);
 router.post('/configuracoes/meu-carrinho', Controladores.MeuCarrinho.configuracaoValidacao, Controladores.MeuCarrinho.configuracao);
 router.post('/configuracoes/self-host', Controladores.SelfHost.configuracaoValidacao, Controladores.SelfHost.configuracao);
