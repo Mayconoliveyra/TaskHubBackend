@@ -10,5 +10,7 @@ declare namespace NodeJS {
 
     JWT_SECRET?: string;
     OPENAI_API_KEY?: string;
+
+    ZT_KEY?: string;
   }
 }
