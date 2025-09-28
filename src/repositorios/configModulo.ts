@@ -20,7 +20,7 @@ const consultarPorModulo = async (modulo: IConfigModulo['modulo']): Promise<IRet
       return {
         sucesso: false,
         dados: null,
-        erro: 'Nenhum registro foi encontrado.',
+        erro: 'Modulo não encontrado.',
         total: 0,
       };
     }

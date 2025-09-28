@@ -200,11 +200,11 @@ const consultarZeroTrustPorUuid = async (req: Request<{ uuid: string }>, res: Re
 
   const empresa = await Repositorios.Empresa.consultarPrimeiroRegistro([{ coluna: 'uuid', operador: '=', valor: empresaUuid }]);
   if (!empresa.sucesso) {
-    return res.status(StatusCodes.NOT_FOUND).json({ errors: { default: empresa.erro } });
+    return res.status(StatusCodes.NOT_FOUND).json({ errors: { default: 'UUID inválido ou empresa não cadastrada.' } });
   }
 
   const jsonConfig = await Servicos.Empresa.gerarJsonZeroTrust(empresaUuid);
-  if (!empresa.sucesso) {
+  if (!jsonConfig.sucesso) {
     return res.status(StatusCodes.NOT_FOUND).json({ errors: { default: jsonConfig.erro } });
   }
 
