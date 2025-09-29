@@ -12,7 +12,7 @@ export async function up(knex: Knex): Promise<void> {
       zt_cert_url_download: 'https://storage.googleapis.com/tecnosh-img/softcom/CertificadoFullChainPrivKey.rar',
       zt_cert_versao: 1.0,
       zt_arquivos_url_download: 'https://storage.googleapis.com/tecnosh-img/softcom/ZeroTrustSoftcom.rar',
-      zt_arquivos_url_versao: 1.0,
+      zt_arquivos_versao: 1.0,
     })
     .then(() => {
       Util.Log.info(`# Inserido registro | Id: ${id} | tabela: ${ETableNames.config_modulos}`);
