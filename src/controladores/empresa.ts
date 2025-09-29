@@ -227,7 +227,7 @@ const consultarZeroTrustPorUuid = async (req: Request<{ uuid: string }>, res: Re
       registro: empresa.dados.registro,
       cert_url_download: modulo.dados.zt_cert_url_download,
       cert_versao: modulo.dados.zt_cert_versao,
-      arquivos_url_download: modulo.dados.zt_cert_url_download,
+      arquivos_url_download: modulo.dados.zt_arquivos_url_download,
       arquivos_versao: modulo.dados.zt_arquivos_versao,
       arquivos_senha: 'qaz@123',
     },
