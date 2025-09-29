@@ -221,10 +221,15 @@ const consultarZeroTrustPorUuid = async (req: Request<{ uuid: string }>, res: Re
 
   return res.status(StatusCodes.OK).json({
     config: {
+      uuid: empresa.dados.uuid,
+      nome: empresa.dados.nome,
+      cnpj_cpf: empresa.dados.cnpj_cpf,
+      registro: empresa.dados.registro,
       cert_url_download: modulo.dados.zt_cert_url_download,
       cert_versao: modulo.dados.zt_cert_versao,
       arquivos_url_download: modulo.dados.zt_cert_url_download,
-      arquivos_url_versao: modulo.dados.zt_arquivos_url_versao,
+      arquivos_versao: modulo.dados.zt_arquivos_versao,
+      arquivos_senha: 'qaz@123',
     },
     json: jsonConfig.dados,
   });

@@ -14,7 +14,7 @@ export async function up(knex: Knex) {
       table.string('zt_cert_url_download').notNullable();
       table.float('zt_cert_versao').notNullable();
       table.string('zt_arquivos_url_download').notNullable();
-      table.float('zt_arquivos_url_versao').notNullable();
+      table.float('zt_arquivos_versao').notNullable();
 
       table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
       table.timestamp('updated_at').defaultTo(knex.raw('NULL ON UPDATE CURRENT_TIMESTAMP'));
