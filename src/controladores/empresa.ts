@@ -231,7 +231,7 @@ const consultarZeroTrustPorUuid = async (req: Request<{ uuid: string }>, res: Re
       arquivos_versao: modulo.dados.zt_arquivos_versao,
       arquivos_senha: 'qaz@123',
     },
-    json: jsonConfig.dados,
+    frpc: jsonConfig.dados,
   });
 };
 
