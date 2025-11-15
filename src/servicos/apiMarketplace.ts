@@ -429,7 +429,7 @@ const zerarIntegracao = async (empresaId: number): Promise<IRetorno<string>> => 
   }
 };
 
-const forcaEstoqueDisponibilidade = async (empresaId: number, merchantId: string): Promise<IRetorno<string>> => {
+const forcaEstoqueDisponibilidade = async (empresaId: number, merchantId: string, erp: 'SOFTSHOP' | 'SOFTCOMSHOP'): Promise<IRetorno<string>> => {
   function calcularDisponibilidade(
     disponibilidadeOriginal: string | null | undefined,
     controleEstoque: boolean | null | undefined,
@@ -441,7 +441,7 @@ const forcaEstoqueDisponibilidade = async (empresaId: number, merchantId: string
     const estoque = estoqueAtual ?? 0;
 
     // Força que seja disponível
-    if (forcaDisponivel) return 'AVAILABLE';
+    if ((forcaDisponivel && !controle) || (erp == 'SOFTCOMSHOP' && !controle)) return 'AVAILABLE';
 
     if (!disponibilidade) return 'UNAVAILABLE';
     if (!controle) return 'AVAILABLE';

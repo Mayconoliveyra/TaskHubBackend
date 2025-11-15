@@ -118,7 +118,7 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
       });
     } else if (tarefa.t_id === 7) {
       // Forma atualização de estoque e disponibilidade
-      const result = await Servicos.ApiMarketplace.forcaEstoqueDisponibilidade(tarefa.e_id, tarefa.e_mc_empresa_id || '');
+      const result = await Servicos.ApiMarketplace.forcaEstoqueDisponibilidade(tarefa.e_id, tarefa.e_mc_empresa_id || '', tarefa.e_erp);
 
       if (!result.sucesso) {
         await Repositorios.TarefaEmpresa.atualizarDados(tarefa.te_id, {
@@ -165,8 +165,8 @@ const executarTarefa = async (tarefa: IVwTarefaProcessar) => {
 };
 
 const processarTarefas = () => {
-  // Executa a cada 5 segundos
-  schedule.scheduleJob('*/5 * * * * *', async () => {
+  // Executa a cada 15 segundos
+  schedule.scheduleJob('*/15 * * * * *', async () => {
     if (emExecucaoTarefas) {
       Util.Log.warn(`${MODULO} | Tarefas | Sincronização já está em execução.`);
       return;
